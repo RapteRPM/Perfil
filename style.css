@@ -205,34 +205,34 @@
 
 
     .nav-link {
-        position: relative; /* Necesario para el posicionamiento del pseudo-elemento */
-        overflow: hidden; /* Oculta el contenido que se desborda */
+        position: relative; 
+        overflow: hidden;
     }
     .nav-link::after {
-        content: ''; /* Crea un pseudo-elemento */
+        content: ''; 
         position: absolute;
         left: 0;
         bottom: 0;
         width: 100%;
-        height: 1px; /* Altura de la línea */
-        background: blue; /* Color de la línea */
-        transform: translateY(100%); /* Comienza fuera de la vista */
-        transition: transform 0.3s ease; /* Transición suave */
+        height: 1px; 
+        background: blue; 
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
     }
     .nav-link:hover::after {
-        transform: translateY(0); /* Desliza la línea hacia arriba */
+        transform: translateY(0);
     }
     .nav-link:hover {
-        color: red; /* Cambia el color del texto al pasar el mouse */
-        transition: color 0.3s ease; /* Transición suave para el color */
+        color: red;
+        transition: color 0.3s ease; 
     }
 
   
 
 
     .body2 {
-    background-color: #f0f0f0; /* Fondo más claro */
-    font-family: Arial, sans-serif; /* Fuente más limpia */
+    background-color: #f0f0f0; 
+    font-family: Arial, sans-serif; 
     display: flex;
     justify-content: center;
     align-items: center;
