@@ -1,4 +1,3 @@
-
 .imagenescartas {
     width: 100%;
     height: 200px;
@@ -54,8 +53,6 @@
         width: 40%; 
         margin: auto;
     }
-
-     
 
     .navbar-nav{
     justify-content: center;
@@ -199,4 +196,119 @@
         width: 100%;
     }
 
-              
+    .card img {
+        transition: transform 0.3s ease;
+    }
+    .card img:hover {
+        transform: scale(1.1); 
+    }
+
+
+    .nav-link {
+        position: relative; /* Necesario para el posicionamiento del pseudo-elemento */
+        overflow: hidden; /* Oculta el contenido que se desborda */
+    }
+    .nav-link::after {
+        content: ''; /* Crea un pseudo-elemento */
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 1px; /* Altura de la línea */
+        background: blue; /* Color de la línea */
+        transform: translateY(100%); /* Comienza fuera de la vista */
+        transition: transform 0.3s ease; /* Transición suave */
+    }
+    .nav-link:hover::after {
+        transform: translateY(0); /* Desliza la línea hacia arriba */
+    }
+    .nav-link:hover {
+        color: red; /* Cambia el color del texto al pasar el mouse */
+        transition: color 0.3s ease; /* Transición suave para el color */
+    }
+
+  
+
+
+    .body2 {
+    background-color: #f0f0f0; /* Fondo más claro */
+    font-family: Arial, sans-serif; /* Fuente más limpia */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.containerr {
+    background-color: red, #004B87;
+    padding: 2em;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+}
+
+#heading {
+    text-align: center;
+    margin-bottom: 1em;
+    font-size: 1.5em;
+    color: red, #004B87;
+}
+
+.field {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 0.5em;
+    margin-bottom: 1em;
+    background-color: #f9f9f9;
+    margin-top: 20px;
+}
+
+
+.field i {
+    margin-right: 0.5em;
+    color: #aaa; 
+}
+
+.input-field {
+    border: none;
+    outline: none;
+    flex-grow: 1;
+    background: transparent;
+}
+
+.btn {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1em;
+}
+
+.button1, .button2, .button3 {
+    padding: 0.5em 1.5em;
+    border-radius: 5px;
+    border: none;  
+    outline: none;
+    transition: .3s ease-in-out;
+}
+
+.button1 {
+    background-color:  red; 
+    color: white;
+}
+
+.button2 {
+    background-color: #007bff; 
+    color: white;
+}
+
+.button3 {
+    background-color: #6c757d; 
+    color: white;
+    width: 100%;
+}
+  
