@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>RPM</title>
+    <meta charset="uft-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="style.css" rel="stylesheet">
+    <link rel="icon" type="image/jpg" href="image/nuevo logo.jpeg"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+</head>
+<body>
+        
+        <header class="container">
+            <!-- Se alojara el logo y el titulo sera el nombre de la marca, se utiliza herramienta
+            de bootstrap flex-grow-1 para centar el titulo-->
+            <div class="centrado color encabezado" style="border: 0 solid transparent;">
+                <div>
+                    <img src="image/nuevo logo.jpeg" class="float-start imagelogo" alt="Logo RPM" style="border-radius: 30px;">
+                </div>
+                <div class=" titulos titulos-extra flex-grow-1">
+                    <h1><b>RPM MARKET</b></h1>
+                </div>
+            </div>
+            <!-- se aloja la barra de busqueda y adicionalmente la barra de navegacion -->
+            <div>
+                <nav class="navbar navbar-expand-lg bg-body-tertiary">
+                    <div class="container-fluid">
+                      <a class="btn btn-outline-primary navbar-brand" href="ingreso.html" role="button">Ingreso</a>
+                      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                      </button>
+                      <div class=" collapse navbar-collapse" id="paginainicio">
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                          <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="#">Pagina principal</a>
+                          </li>
+                          <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Servicios
+                            </a>
+                            <ul class="dropdown-menu">
+                              <li><a class="dropdown-item" href="#">Servicio de grua</a></li>
+                              <li><a class="dropdown-item" href="#">Encuentra tu taller</a></li>
+                              <li><hr class="dropdown-divider"></li>
+                              <li><a class="dropdown-item" href="#">Centro de compras</a></li>
+                            </ul>
+                          </li>
+                          <li class="nav-item">
+                          <a class="nav-link" href="#somos">Quienes somos</a>
+                          </li>
+                        </ul>
+
+                      </div>
+                    </div>
+                  </nav>
+                  <div class="barrabusqueda mt-5">
+                    <h6>Encuentra lo que necesitas</h6>
+                    <form class=" barrabusqueda2 navbar-collapse" role="search">
+                        <input class="form-control me-2" type="search" placeholder="Repuestos de motos" aria-label="Search">
+                        <button class="btn btn-danger" type="submit">Buscar</button>
+                    </form>
+                </div>
+            </div>
+        </header>
+    
+        <!-- Contenido de la primera seccion donde se tendra tres imagenes que con ayuda de bootstrap se despliegan en una fila
+         con reporduccion automatica y tendra como rol promocionar los productos destacados-->
+        <main class="container mt-4">
+            <section class="mt-5" id="inicio">
+                <h2>Productos Destacados</h2>
+                <article class="container mt-5 color1">
+                  <div id="carouselExampleAutoplaying" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                      <div class="carousel-item active">
+                        <img src="image/Grua.png" class="d-block" style="border-radius: 5%;  width: 62%; margin: auto;">
+                      </div>
+                      <div class="carousel-item">
+                        <img src="image/Soat.jpg" class="d-block" style="border-radius: 5%; width: 70%; margin: auto;">
+                      </div>
+                      <div class="carousel-item">
+                        <img src="image/imagen_princip.png" class="d-block" style="border-radius: 5% ; width: 70%; margin: auto;">
+                      </div>
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleAutoplaying" data-bs-slide="prev">
+                      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                      <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleAutoplaying" data-bs-slide="next">
+                      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                      <span class="visually-hidden">Next</span>
+                    </button>
+                  </div>
+                </article>
+            </section>    
+            <section class="mt-5" style="margin: 15px;"><!-- creamos otra seccion para la visualizacion de los productos publicados, esto hecho con 
+              bootstrap "cartas- tarjetas de la renta pero adicionalmente dentro de cada tarjeta se adiciona "-->
+              <div class="btn-group" role="group" aria-label="Basic outlined example">
+                <button type="button" class="btn btn-outline-danger">Accesorios</button>
+                <button type="button" class="btn btn-outline-primary">Servicios</button>
+                <button type="button" class="btn btn-outline-danger">Repuestos</button>
+              </div>
+              <article class="row row-cols-2 row-cols-md-3 g-4">
+                <article class=" col card border-danger mb-4" style="background: rgb(231, 228, 228);">
+                  <div class="card-header"> <!--  color1 y colorcard es un codigo propio de css dando estilo a la carta-->
+                    <div id="carouselExample" class="carousel slide">
+                      <div class="carousel-inner">
+                        <div class="carousel-item active">
+                          <img src="image/Guantes 1.png" class="d-block colorcard imagenescartas">
+                        </div>
+                        <div class="carousel-item">
+                          <img src="image/Guante 2.png" class="d-block colorcard imagenescartas">
+                        </div>
+                        <div class="carousel-item">
+                          <img src="image/Guante 3.png" class="d-block colorcard imagenescartas">
+                        </div>
+                      </div>
+                      <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                      </button>
+                      <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                      </button>
+                    </div>
+                    <div class="card-body titulos">
+                      <h5 class="card-title"><b>Guantes Fox</b></h5>
+                      <h6 class="titulos">$38.000</h6>
+                      <a href="#" class="btn btn-danger">Ver Más</a><!-- pendiente establecer el anclaje "href="#"" -->
+                    </div>
+                  </article>
+                  <article class=" col card border-danger mb-4" style="background: rgb(231, 228, 228);"><!-- 2do producto-->
+                    <div class="card-header">
+                      <div id="seccion2" class="carousel slide">
+                        <div class="carousel-inner">
+                          <div class="carousel-item active">
+                            <img src="image/Chaqueta 1.png" class="d-block colorcard imagenescartas">
+                          </div>
+                          <div class="carousel-item">
+                            <img src="image/Chaqueta 1-2.png" class="d-block colorcard imagenescartas">
+                          </div>
+                          <div class="carousel-item">
+                            <img src="image/Chaqueta 2.png" class="d-block colorcard imagenescartas">
+                          </div>
+                          <div class="carousel-item">
+                            <img src="image/Chaqueta 3.png" class="d-block colorcard imagenescartas">
+                          </div>
+                          <div class="carousel-item">
+                            <img src="image/Chaqueta 4.png" class="d-block colorcard imagenescartas">
+                          </div>
+                          <div class="carousel-item">
+                            <img src="image/chaqueta 4-2.png" class="d-block colorcard imagenescartas">
+                          </div>
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#seccion2" data-bs-slide="prev">
+                          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                          <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#seccion2" data-bs-slide="next">
+                          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                          <span class="visually-hidden">Next</span>
+                        </button>
+                      </div>
+                      <div class="card-body titulos">
+                        <h5 class="card-title"><b>Chaquetas reflectivas para hombre</b></h5>
+                        <h6 class="titulos">$190.000</h6>
+                        <a href="#" class="btn btn-danger">Ver Más</a><!-- pendiente establecer el anclaje "href="#"" -->
+                      </div>
+                    </article>
+                      <article class=" col card border-danger mb-4" style="background: rgb(231, 228, 228);">
+                        <div class="card-header"> <!--  color1 y colorcard es un codigo propio de css dando estilo a la carta-->
+                          <div id="seccioncasco" class="carousel slide">
+                            <div class="carousel-inner">
+                              <div class="carousel-item active">
+                                <img src="image/Casco 1.png" class="d-block colorcard imagenescartas">
+                              </div>
+                              <div class="carousel-item">
+                                <img src="image/Casco 2.png" class="d-block colorcard imagenescartas">
+                              </div>
+                              <div class="carousel-item">
+                                <img src="image/Casco 3.png" class="d-block colorcard imagenescartas">
+                              </div>
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#seccioncasco" data-bs-slide="prev">
+                              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                              <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#seccioncasco" data-bs-slide="next">
+                              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                              <span class="visually-hidden">Next</span>
+                            </button>
+                          </div>
+                        <div class="card-body container titulos">
+                          <h5 class="card-title">Cascos Xtrong 820</h5>
+                          <h6 class="titulos">$380.000</h6>
+                          <a href="#" class="btn btn-danger">Ver Más</a><!-- pendiente establecer el anclaje "href="#"" -->
+                        </div>
+                      </article>
+                      <article class=" col card border-danger mb-4" style="background: rgb(231, 228, 228);">
+                        <div class="card-header">
+                          <div id="Taller" class="carousel slide">
+                            <div class="carousel-inner">
+                              <div class="carousel-item active">
+                                <img src="image/MONTALLANTAS 2.png" class="d-block colorcard imagenescartas">
+                              </div>
+                              <div class="carousel-item">
+                                <img src="image/MONTALLANTAS.png" class="d-block colorcard imagenescartas">
+                              </div>
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#Taller" data-bs-slide="prev">
+                              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                              <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#Taller" data-bs-slide="next">
+                              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                              <span class="visually-hidden">Next</span>
+                            </button>
+                          </div>
+                          <div class="card-body container titulos">
+                            <h5 class="card-title">CarMontallantas servicio de montallantas y mecánica automotriz general.</h5>
+                            <h6 class="titulos">$50.000</h6>
+                            <a href="#" class="btn btn-danger">Ver Más</a><!-- pendiente establecer el anclaje "href="#"" -->
+                          </div>
+                        </article>
+                        <article class=" col card border-danger mb-4" style="background: rgb(231, 228, 228);">
+                          <div class="card-header">
+                            <div id="KIT" class="carousel slide">
+                              <div class="carousel-inner">
+                                <div class="carousel-item active">
+                                  <img src="image/KIT DE ARRASTRE.png" class="d-block colorcard imagenescartas">
+                                </div>
+                                <div class="carousel-item">
+                                  <img src="image/KIT DE ARRASTRE 2.png" class="d-block colorcard imagenescartas">
+                                </div>
+                              </div>
+                              <button class="carousel-control-prev" type="button" data-bs-target="#KIT" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                              </button>
+                              <button class="carousel-control-next" type="button" data-bs-target="#KIT" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                              </button>
+                            </div>
+                            <div class="card-body container titulos">
+                              <h5 class="card-title">Kit de arrastre para todas las marcas</h5>
+                              <h6 class="titulos">$130.000</h6>
+                              <a href="#" class="btn btn-danger">Ver Más</a><!-- pendiente establecer el anclaje "href="#"" -->
+                            </div>
+                          </article>
+                          <article class=" col card border-danger mb-4" style="background: rgb(231, 228, 228);">
+                            <div class="card-header">
+                              <div id="espejos" class="carousel slide">
+                                <div class="carousel-inner">
+                                  <div class="carousel-item active">
+                                    <img src="image/ESPEJOS1.png" class="d-block colorcard imagenescartas">
+                                  </div>
+                                  <div class="carousel-item">
+                                    <img src="image/ESPEJOS2.png" class="d-block colorcard imagenescartas">
+                                  </div>
+                                  <div class="carousel-item">
+                                    <img src="image/ESPEJOS3.png" class="d-block colorcard imagenescartas">
+                                  </div>
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#espejos" data-bs-slide="prev">
+                                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                  <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#espejos" data-bs-slide="next">
+                                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                  <span class="visually-hidden">Next</span>
+                                </button>
+                              </div>
+                              <div class="card-body container titulos">
+                                <h5 class="card-title">Llegó Espejos Rizoma 5 Puntas para Moto🚀</h5>
+                                <h6 class="titulos">$44.990</h6>
+                                <a href="#" class="btn btn-danger">Ver Más</a><!-- pendiente establecer el anclaje "href="#"" -->
+                              </div>
+                            </article>
+                </article>
+
+            </section>
+
+        </main>
+    
+        <!-- se crea el Footer con un Id de anclaje-->
+        <footer class="footer" id="somos">
+            <div class="logo ">RPM</div>
+            </div>
+                <div class="footer-section">
+                    <h4><b>Sistema de atención</b></h4>
+                    <p>Email: infoRPM@gmail.com</p>
+                    <p>Teléfono: 301 403 8181</p>
+                </div>
+                <div class="footer-section">
+                    <h4><b>Información</b></h4>
+                    <ul>
+                        <li>Política de cookies</li>
+                        <li>Política de privacidad</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4><b>Síguenos</b></h4>
+                    <div class="social-icons">
+                        <a href="#">Facebook</a>
+                        <a href="#">Twitter</a>
+                        <a href="#">Instagram</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+</body>
+<script src="JS/animacion.js"></script>
+
+</html>
