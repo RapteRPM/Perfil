@@ -49,7 +49,6 @@ btnExcel.addEventListener('click', () => {
         .filter(Boolean)
         .join('&');
 
-    // Descargar Excel con filtros aplicados
     const url = `/api/historial/excel?${query}`;
     window.open(url, '_blank');
 });
