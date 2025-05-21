@@ -389,3 +389,12 @@ footer a {
     border-radius: 5px;
     cursor: pointer;
 }
+
+
+.boton-vermas {
+    display: block;
+    margin: 0 auto;
+    width: 100px;
+    padding: 6px 20px;
+    text-align: center;
+}
