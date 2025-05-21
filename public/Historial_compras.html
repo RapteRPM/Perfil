@@ -23,11 +23,9 @@
         ordenPrecio
     }).toString();
 
-    // Si estás en el mismo servidor
+
     window.open(`/api/historial/excel?${queryParams}`, '_blank');
 
-    // Si estás trabajando con IP (como desde otro PC en red), usa esto:
-    // window.open(`http://TU_IP_LOCAL:3000/api/historial/excel?${queryParams}`, '_blank');
         });
     });
 </script>
