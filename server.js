@@ -55,7 +55,7 @@ app.post('/api/login', (req, res) => {
     });
 });
 app.listen(port, () => {
-    console.log(`🚀 Servidor escuchando en http://localhost:${port}/ingreso.html`);
+    console.log(`🚀 Servidor escuchando en http://localhost:${port}/index.html`);
 });
 
 
@@ -107,8 +107,6 @@ app.get('/api/historial', (req, res) => {
     });
 });
 
-
-// Opcion para descargar el Excel
 
 // Opcion para descargar el Excel
 
@@ -174,19 +172,19 @@ app.get('/api/historial/excel', async (req, res) => {
             { header: 'Fecha Compra', key: 'RegistroCompra', width: 20 }
         ];
 
-        results.forEach((row, i) => {
-            worksheet.addRow({
-                n: i + 1,
-                IdFactura: row.IdFactura,
-                NombreCliente: row.NombreCliente,
-                NombreComercio: row.NombreComercio,
-                NombreProducto: row.NombreProducto,
-                Cantidad: row.Cantidad,
-                ValorUnidad: row.ValorUnidad,
-                TotalPago: row.TotalPago,
-                RegistroCompra: row.RegistroCompra.toISOString().split('T')[0]
-            });
+    results.forEach((row, i) => {
+        worksheet.addRow({
+            n: i + 1,
+            IdFactura: row.IdFactura,
+            NombreCliente: row.NombreCliente,
+            NombreComercio: row.NombreComercio,
+            NombreProducto: row.NombreProducto,
+            Cantidad: row.Cantidad,
+            ValorUnidad: Number(row.ValorUnidad), 
+            TotalPago: Number(row.TotalPago),   
+            RegistroCompra: row.RegistroCompra.toISOString().split('T')[0]
         });
+    });
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', 'attachment; filename=historial_compras.xlsx');
