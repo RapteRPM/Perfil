@@ -23,10 +23,10 @@ const connection = mysql.createConnection({
 // Conectar a MySQL
 connection.connect((err) => {
     if (err) {
-        console.error('❌ Error conectando a la base de datos:', err.stack);
+        console.error(' Error conectando a la base de datos:', err.stack);
         return;
     }
-    console.log('✅ Conectado a la base de datos con ID ' + connection.threadId);
+    console.log(' Conectado a la base de datos con ID ' + connection.threadId);
 });
 
 // Ruta para validar el login
@@ -34,18 +34,18 @@ app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
 
     // Verificamos si llegaron los datos
-    console.log('🟡 Usuario recibido:', username);
-    console.log('🟡 Contraseña recibida:', password);
+    console.log(' Usuario recibido:', username);
+    console.log(' Contraseña recibida:', password);
 
     const query = 'SELECT * FROM Credenciales WHERE TRIM(NombreUsuario) = TRIM(?) AND TRIM(Contrasena) = TRIM(?)';
 
     connection.query(query, [username, password], (error, results) => {
         if (error) {
-            console.error('❌ Error en la consulta:', error); // Este mostrará el motivo del error 500
+            console.error(' Error en la consulta:', error); // Este mostrará el motivo del error 500
             return res.status(500).json({ success: false, message: 'Error en el servidor' });
         }
 
-        console.log('🔍 Resultado de la consulta:', results);
+        console.log(' Resultado de la consulta:', results);
 
         if (results.length > 0) {
             res.json({ success: true });
@@ -55,7 +55,7 @@ app.post('/api/login', (req, res) => {
     });
 });
 app.listen(port, () => {
-    console.log(`🚀 Servidor escuchando en http://localhost:${port}/index.html`);
+    console.log(` Servidor escuchando en http://localhost:${port}/index.html`);
 });
 
 
@@ -99,7 +99,7 @@ app.get('/api/historial', (req, res) => {
 
     connection.query(query, params, (err, results) => {
         if (err) {
-            console.error('❌ Error en la consulta de historial:', err);
+            console.error(' Error en la consulta de historial:', err);
             return res.status(500).json({ error: 'Error en la consulta de historial' });
         }
 
@@ -153,7 +153,7 @@ app.get('/api/historial/excel', async (req, res) => {
 
     connection.query(query, params, async (err, results) => {
         if (err) {
-            console.error('❌ Error en consulta Excel:', err);
+            console.error(' Error en consulta Excel:', err);
             return res.status(500).send('Error al generar Excel');
         }
 
@@ -191,5 +191,28 @@ app.get('/api/historial/excel', async (req, res) => {
 
         await workbook.xlsx.write(res);
         res.end();
+    });
+});
+
+
+
+// Ruta para obtener los talleres
+app.get('/api/talleres', (req, res) => {
+    const sql = `
+        SELECT
+        Nombre,
+        Latitud,
+        Longitud,
+        Horarios,
+        DiasAtencion
+        FROM informacionVendedor I inner join Perfil P ON I.InfoVendedor = P.Usuario
+    `;
+
+    connection.query(sql, (err, results) => {
+        if (err) {
+            console.error('Error al obtener ubicaciones:', err);
+            return res.status(500).json({ error: 'Error al obtener ubicaciones' });
+        }
+        res.json(results);
     });
 });
