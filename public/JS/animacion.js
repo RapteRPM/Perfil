@@ -1,67 +1,48 @@
-
-const buttons = document.querySelectorAll('.btn');
-
-buttons.forEach(button => {
-    button.addEventListener('mouseover', () => {
-        button.style.transform = 'scale(1.1)'; 
-        button.style.transition = 'transform 0.3s'; 
-        button.style.backgroundColor = 'blue';
-    });
-    // 
-    button.addEventListener('mouseout', () => {
-        button.style.transform = 'scale(1)';
-        button.style.backgroundColor = ''; 
-    });
-});
-
-
-/* ANIMACION APARTADO REGISTRO */
-
 document.addEventListener("DOMContentLoaded", function () {
     const tipoUsuario = document.getElementById("tipoUsuario");
-    const tipoComercio = document.getElementById("tipoComercio");
-    const form = document.getElementById("registroForm");
+    const formRegistro = document.getElementById("formRegistro");
 
-    tipoUsuario.addEventListener("change", () => {
-        const valor = tipoUsuario.value;
-        document.getElementById("datosComunes").style.display = valor ? "block" : "none";
-        document.getElementById("formNatural").style.display = valor === "natural" ? "block" : "none";
-        document.getElementById("comercioServicioSeleccion").style.display = valor === "comercio_servicio" ? "block" : "none";
-        document.getElementById("formComerciante").style.display = "none";
-        document.getElementById("formServicio").style.display = "none";
-    });
+    const formNatural = document.getElementById("tipoNatural");
+    const formComerciante = document.getElementById("tipoComerciante");
+    const formServicio = document.getElementById("TipoServicio");
+    const datosComunes = document.getElementById("datosComunes");
 
-    tipoComercio.addEventListener("change", () => {
-        const valor = tipoComercio.value;
-        document.getElementById("formComerciante").style.display = valor === "comerciante" ? "block" : "none";
-        document.getElementById("formServicio").style.display = valor === "servicio" ? "block" : "none";
-    });
+    if (tipoUsuario) {
+        tipoUsuario.addEventListener("change", function () {
+            // Ocultar formularios y quitar required de todos sus inputs
+            [formNatural, formComerciante, formServicio].forEach(form => {
+                if (form) {
+                    form.style.display = "none";
+                    form.querySelectorAll("input, select, textarea").forEach(input => {
+                        input.required = false;
+                    });
+                }
+            });
+        if (datosComunes) {
+            datosComunes.style.display = this.value ? "block" : "none";}
+            let selectedForm = null;
 
-    form.addEventListener("submit", function (e) {
-        e.preventDefault();
+            if (this.value === "natural") selectedForm = formNatural;
+            if (this.value === "comerciante") selectedForm = formComerciante;
+            if (this.value === "servicio") selectedForm = formServicio;
 
-        // 🛠️ Desactivar campos requeridos ocultos
-        const allRequiredFields = form.querySelectorAll("[required]");
-        allRequiredFields.forEach(field => {
-            if (field.offsetParent === null) {
-                field.required = false;
+            if (selectedForm) {
+                selectedForm.style.display = "block";
+                selectedForm.querySelectorAll("input, select, textarea").forEach(input => {
+                    input.required = true;
+                });
             }
         });
+    }
 
-        // Obtener valores seleccionados
-        const tipo = tipoUsuario.value;
-        const subtipo = tipoComercio.value;
+    if (formRegistro) {
+        formRegistro.addEventListener("submit", function () {
 
-        // Mensaje de éxito personalizado
-        if (tipo === "comercio_servicio" && (subtipo === "comerciante" || subtipo === "servicio")) {
-            alert("Registramos su solicitud, estará en proceso de revisión y creación de usuario.");
-        } else {
-            alert("Usuario registrado exitosamente.");
-        }
-
-        // Redirigir después de un breve retardo
-        setTimeout(() => {
-            window.location.href = "ingreso.html";
-        }, 500);
-    });
+            // Desactivar campos requeridos ocultos
+            const allRequiredFields = formRegistro.querySelectorAll("[required]");
+            allRequiredFields.forEach(field => {
+                if (field.offsetParent === null) field.required = false;
+            });
+        });
+    }
 });

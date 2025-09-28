@@ -14,49 +14,85 @@
 </head>
 <body>
         
-        <header class="container">
-            <!-- Se alojara el logo y el titulo sera el nombre de la marca, se utiliza herramienta
-            de bootstrap flex-grow-1 para centar el titulo-->
-            <div class="centrado color encabezado" style="border: 0 solid transparent;">
-                <div>
-                    <img src="image/nuevo logo.jpeg" class="float-start imagelogo" alt="Logo RPM" style="border-radius: 30px;">
-                </div>
-                <div class=" titulos titulos-extra flex-grow-1">
-                    <h1><b>RPM MARKET</b></h1>
-                </div>
-            </div>
-            <!-- se aloja la barra de busqueda y adicionalmente la barra de navegacion -->
+    <header class="container">
+        <div class="centrado color encabezado">
             <div>
-                <nav class="navbar navbar-expand-lg bg-body-tertiary">
-                    <div class=" collapse navbar-collapse" id="paginainicio">
-                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                            <li class="nav-item">
-                                <a class="nav-link active" aria-current="page" href="index.html">Pagina principal</a>
-                            </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Servicios</a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#">Servicio de grua</a></li>
-                                    <li><a class="dropdown-item" href="#"></a>########</li><!--poner otra pestaña aqui -->
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="#">Centro de ayuda</a></li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </div>
-                </nav>
+                <img src="image/nuevo logo.jpeg" class="float-start imagelogo" alt="Logo RPM" style="border-radius: 30px;">
             </div>
-        </header>
-        <section>
-        <div class="container mt-4">
-            <h2 class="text-center">Encuentra tu taller</h2>
-            <div id="map" style="height: 500px; width: 80%; border: 2px solid #ccc; border-radius: 10px;"></div>
+            <div class="titulos titulos-extra flex-grow-1">
+                <h1><b>RPM MARKET</b></h1>
+            </div>
         </div>
         <div>
-            <H2>HOLA MUNDO</H2>
+            <nav class="navbar navbar-expand-lg bg-body-tertiary">
+                <div class="collapse navbar-collapse" id="paginainicio">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="index.html">Pagina principal</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Servicios</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="ingreso.html">Iniciar sesion</a></li>
+                                <li><a class="dropdown-item" href="#">Otro servicio</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#">Centro de ayuda</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </header>
+    <section>
+        <div class="container mt-4">
+        <h2 class="text-center">Encuentra tu taller</h2>
+        
+        <!-- Barra de búsqueda -->
+        <div class="input-group mb-3">
+            <input type="text" id="busquedaTaller" class="form-control" placeholder="Buscar taller por nombre o ubicación...">
+            <button class="btn btn-primary" onclick="buscarTaller()">Buscar</button>
+        </div>
+                <!-- Filtros -->
+<div class="row mb-3">
+    <!-- Filtro por rango de horas -->
+    <div class="col-md-6">
+        <label class="form-label">Rango de horas</label>
+        <div class="d-flex gap-2">
+            <input type="time" id="horaInicioFiltro" class="form-control">
+            <input type="time" id="horaFinFiltro" class="form-control">
+        </div>
+    </div>
+</div>
+<button class="btn btn-primary mt-2" onclick="filtrarTalleres()">Aplicar filtros</button>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div id="map" style="height: 500px; border: 2px solid #ccc; border-radius: 10px;"></div>
+                <button class="btn btn-success mt-3" onclick="localizarUsuario()">📍 Mi ubicación</button>
+            </div>
+            <div class="col-md-4">
+                <h5>Lista de talleres</h5>
+                <ul id="lista-talleres" class="list-group"></ul>
+                <div id="paginacion" class="mt-3 text-center"></div>
+            </div>
         </div>
         
-        </section>
+    </section>
+    <!-- Modal para detalles -->
+    <div class="modal fade" id="detalleTaller" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles del Taller</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="detalleContenido">
+    <!-- Contenido dinámico -->
+                </div>
+            </div>
+        </div>
+    </div>
 
     
         <!-- se crea el Footer con un Id de anclaje-->

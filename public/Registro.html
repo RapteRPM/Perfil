@@ -24,213 +24,176 @@
             </div>
 
 </header>
-<section>
-    <div class="container mt-4 mb-5">
-        <form id="registroForm" enctype="multipart/form-data">
-            <div class="mb-3">
+<section class="container mt-4 mb-5">
+    <form id="formRegistro" method="POST" enctype="multipart/form-data">
+
+        <!-- Selección de tipo de usuario -->
+        <div class="mb-3">
             <label for="tipoUsuario" class="form-label">Tipo de usuario</label>
             <select class="form-select" id="tipoUsuario" name="tipoUsuario" required>
                 <option value="">Seleccione una opción</option>
                 <option value="natural">Usuario Natural</option>
-                <option value="comercio_servicio">Usuario Jurídico</option>
+                <option value="comerciante">Usuario Comerciante</option>
+                <option value="servicio">Prestador de Servicios</option>
             </select>
-            </div>
+        </div>
 
-        <!-- Formulario de datos basicos -->
-            <div id="datosComunes" style="display: none;">
-                <div class="mb-3">
-                    <label for="fotoPerfil" class="form-label">Foto de perfil</label>
-                    <input type="file" class="form-control" id="fotoPerfil" name="fotoPerfil" accept="image/*" required>
-                </div>
-                <div class="mb-3">
-                    <label for="cedula" class="form-label">Cédula</label>
-                    <input type="text" class="form-control" id="cedula" name="cedula" required>
-                </div>
-                <div class="mb-3">
-                    <label for="nombreNatural" class="form-label">Nombre completo</label>
-                    <input type="text" class="form-control" id="nombreNatural" name="nombre" required>
-                </div>
-                <div class="mb-3">
-                    <label for="telefono" class="form-label">Teléfono</label>
-                    <input type="tel" class="form-control" id="telefono" name="telefono" required>
-                </div>
-                <div class="mb-3">
-                    <label for="correo" class="form-label">Correo electrónico</label>
-                    <input type="email" class="form-control" id="correo" name="correo" required>
-                </div>
-            </div>
+        <!-- 📌 Formulario Usuario Natural -->
 
-        <!-- seleccion de usuario natural -->
-            <div id="formNatural" style="display: none;">
-                <div class="mb-3">
-                    <label class="form-label">Dirección</label>
-                    <div class="row g-2">
-            <!-- direccion usuario natural -->
-                        <div class="col-md-2">
-                            <select class="form-select" name="tipoVia">
-                                <option value="">Tipo</option>
-                                <option>Calle</option>
-                                <option>Cra</option>
-                                <option>Av</option>
-                                <option>Diagonal</option>
-                                <option>Transversal</option>
-                            </select>
-                        </div>
-                        <div class="col-md-1"><input class="form-control" name="num1" placeholder=" "></div>
-                        <div class="col-md-1">
-                            <select class="form-select" name="letra1">
-                                <option value="">Letra</option>
-                                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option>
-                                <option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option>
-                                <option value="K">K</option><option value="L">L</option><option value="M">M</option><option value="N">N</option><option value="O">O</option>
-                                <option value="P">P</option><option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option>
-                                <option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option><option value="Y">Y</option>
-                                <option value="Z">Z</option><option value="BIS">BIS</option>
-                            </select>
-                        </div>
-                        <div class="col-md-1"><span class="form-control border-0 text-center">#</span></div>
-                        <div class="col-md-1"><input class="form-control" name="num2" placeholder=" "></div>
-                        <div class="col-md-1">
-                            <select class="form-select" name="letra2">
-                                <option value="">Letra</option>
-                                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option>
-                                <option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option>
-                                <option value="K">K</option><option value="L">L</option><option value="M">M</option><option value="N">N</option><option value="O">O</option>
-                                <option value="P">P</option><option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option>
-                                <option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option><option value="Y">Y</option>
-                                <option value="Z">Z</option><option value="BIS">BIS</option>
-                            </select>
-                        </div>
-                        <div class="col-md-1"><span class="form-control border-0 text-center">-</span></div>
-                        <div class="col-md-1"><input class="form-control" name="num3" placeholder=" "></div>
-                        <div class="col-md-1">
-                            <select class="form-select" name="letra3">
-                                <option value="">Letra</option>
-                                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option>
-                                <option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option>
-                                <option value="K">K</option><option value="L">L</option><option value="M">M</option><option value="N">N</option><option value="O">O</option>
-                                <option value="P">P</option><option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option>
-                                <option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option><option value="Y">Y</option>
-                                <option value="Z">Z</option><option value="BIS">BIS</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label for="barrioNatural" class="form-label">Barrio</label>
-                    <input type="text" class="form-control" id="barrioNatural" name="barrio" required>
-                </div>
-            </div>
-
-        <!-- Comerciantes o servicios -->
-            <div id="comercioServicioSeleccion" style="display: none;">
-                <label class="form-label">Seleccione tipo</label>
-                <select class="form-select" id="tipoComercio" name="tipoComercio" required>
-                    <option value="">Seleccione</option>
-                    <option value="comerciante">Comerciante</option>
-                    <option value="servicio">Prestación de Servicios</option>
-                </select>
-            </div>
-
-        <!-- Comerciantes -->
-            <div id="formComerciante" style="display: none;">
-                <div class="mb-3">
-                    <label for="nombreComercio" class="form-label">Nombre comercio</label>
-                    <input type="text" class="form-control" id="nombreComercio" name="nombre" required>
-                </div>
-                <div class="mb-3">
-                    <label for="nit" class="form-label">NIT de la empresa</label>
-                    <input type="text" class="form-control" id="nit" name="nit" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Horario de atención</label>
-                    <div class="row g-2">
-                        <div class="col"><input type="time" class="form-control" name="horaInicio" required></div>
-                        <div class="col-auto align-self-center">a</div>
-                        <div class="col"><input type="time" class="form-control" name="horaFin" required></div>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label for="dias" class="form-label">Días de atención</label>
-                    <input type="text" class="form-control" id="dias" name="dias" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Dirección</label>
-                    <div class="row g-2">
-            <!-- Dirección comercio -->
-                        <div class="col-md-2">
-                            <select class="form-select" name="tipoVia" required>
-                                <option value="">Tipo</option>
-                                <option>Calle</option>
-                                <option>Cra</option>
-                                <option>Av</option>
-                                <option>Diagonal</option>
-                                <option>Transversal</option>
-                            </select>
-                        </div>
-                        <div class="col-md-1"><input class="form-control" name="num1" placeholder="#" ></div>
-                        <div class="col-md-1">
-                            <select class="form-select" name="letra1">
-                                <option value="">Letra</option>
-                                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option>
-                                <option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option>
-                                <option value="K">K</option><option value="L">L</option><option value="M">M</option><option value="N">N</option><option value="O">O</option>
-                                <option value="P">P</option><option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option>
-                                <option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option><option value="Y">Y</option>
-                                <option value="Z">Z</option><option value="BIS">BIS</option>
-                            </select>
-                        </div>
-                        <div class="col-md-1"><span class="form-control border-0 text-center">#</span></div>
-                        <div class="col-md-1"><input class="form-control" name="num2" placeholder="#" ></div>
-                        <div class="col-md-1">
-                            <select class="form-select" name="letra2">
-                                <option value="">Letra</option>
-                                <option value="A">A</option><option value="B">B</option><option value="BIS">BIS</option>
-                            </select>
-                        </div>
-                        <div class="col-md-1"><span class="form-control border-0 text-center">-</span></div>
-                        <div class="col-md-1"><input class="form-control" name="num3" placeholder="#" ></div>
-                        <div class="col-md-1">
-                            <select class="form-select" name="letra3">
-                                <option value="">Letra</option>
-                                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option>
-                                <option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option>
-                                <option value="K">K</option><option value="L">L</option><option value="M">M</option><option value="N">N</option><option value="O">O</option>
-                                <option value="P">P</option><option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option>
-                                <option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option><option value="Y">Y</option>
-                                <option value="Z">Z</option><option value="BIS">BIS</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label for="barrioComercio" class="form-label">Barrio</label>
-                    <input type="text" class="form-control" id="barrioComercio" name="barrio" required>
-                </div>
-                <div class="mb-3">
-                    <label for="redes" class="form-label">Redes sociales (opcional)</label>
-                    <input type="text" class="form-control" id="redes" name="redes">
-                </div>
-            </div>
-
-        <!-- Prestadores de servicio -->
-            <div id="formServicio" style="display: none;">
-                <div class="mb-3">
-                    <label for="certificado" class="form-label">Certificado de operación de grúa</label>
-                    <input type="file" class="form-control" id="certificado" name="certificado" accept=".pdf,.jpg,.png">
-                </div>
-                <div class="mb-3">
-                    <label for="redesServicio" class="form-label">Redes sociales (opcional)</label>
-                    <input type="text" class="form-control" id="redesServicio" name="redesServicio">
-                </div>
-            </div>
-
-            <div class="d-flex justify-content-between mt-4">
-                <button type="submit" class="btn btn-primary">Registrar</button>
-                <a href="ingreso.html" class="btn btn-secondary">Volver</a>
-            </div>
-        </form>
+        <div id="tipoNatural" style="display:none;">
+            <div class="mb-3">
+            <label class="form-label">Foto de perfil</label>
+            <input type="file" class="form-control" id="fotoPerfil" name="FotoPerfil" accept="image/*">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Documento</label>
+            <input type="text" class="form-control" id="Usuario" name="Usuario">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Nombre completo</label>
+            <input type="text" class="form-control" id="Nombre" name="Nombre">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Teléfono</label>
+            <input type="tel" class="form-control" id="Telefono" name="Telefono">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Correo electrónico</label>
+            <input type="email" class="form-control" id="Correo" name="Correo">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Dirección</label>
+            <input type="text" class="form-control" id="Direccion" name="Direccion" placeholder="Ej: Cra 10 #20-30">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Barrio</label>
+            <input type="text" class="form-control" id="Barrio" name="Barrio">
+        </div>
+        <div class="d-flex justify-content-between mt-4">
+            <button type="submit" class="btn btn-primary">Registrar</button>
+            <a href="ingreso.html" class="btn btn-secondary">Volver</a>
+        </div>
     </div>
+
+    <!-- 📌 Formulario Comerciante -->
+    <div id="tipoComerciante" style="display:none;">
+        <div class="mb-3">
+            <label class="form-label">Foto de perfil</label>
+            <input type="file" class="form-control" id="fotoPerfilComercio" name="FotoPerfil" accept="image/*">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Nombre completo</label>
+            <input type="text" class="form-control" id="NombreComerciante" name="Nombre">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Documento</label>
+            <input type="text" class="form-control" id="UsuarioComercio" name="Usuario">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Teléfono</label>
+            <input type="tel" class="form-control" id="TelefonoComercio" name="Telefono">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Correo electrónico</label>
+            <input type="email" class="form-control" id="CorreoComercio" name="Correo">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Dirección del comercio</label>
+            <input type="text" class="form-control" id="DireccionComercio" name="DireccionComercio">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Barrio</label>
+            <input type="text" class="form-control" id="BarrioComercio" name="Barrio">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Nit Comercio</label>
+            <input type="text" class="form-control" id="InfoVendedor" name="InfoVendedor">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Nombre del comercio</label>
+            <input type="text" class="form-control" id="NombreComercio" name="NombreComercio">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Redes Sociales</label>
+            <input type="text" class="form-control" id="RedesSociales" name="RedesSociales">
+        </div>
+        <div class="mb-3">
+            <label for="dias" class="form-label">Días de atención</label>
+            <input type="text" class="form-control" id="DiasAtencion" name="DiasAtencion" placeholder="ej: Lunes-Viernes">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Horario de atención</label>
+                <div class="row g-2">
+                    <div class="col"><input type="time" class="form-control" id="horaInicio" name="horaInicio"></div>
+                    <div class="col-auto align-self-center">a</div>
+                    <div class="col"><input type="time" class="form-control" id="horaFin" name="horaFin"></div>
+                </div>
+        </div>
+        <div class="d-flex justify-content-between mt-4">
+            <button type="submit" class="btn btn-primary">Registrar</button>
+            <a href="ingreso.html" class="btn btn-secondary">Volver</a>
+        </div>
+    </div>
+
+    <!-- 📌 Formulario Prestador de Servicios -->
+    <div id="TipoServicio" style="display:none;">
+        <div class="mb-3">
+            <label class="form-label">Foto de perfil</label>
+            <input type="file" class="form-control" id="fotoPerfilServicio" name="FotoPerfil" accept="image/*">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Documento</label>
+            <input type="text" class="form-control" id="UsuarioServicio" name="Usuario">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Nombre completo</label>
+            <input type="text" class="form-control" id="NombreServicio" name="Nombre">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Teléfono</label>
+            <input type="tel" class="form-control" id="TelefonoServicio" name="Telefono">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Correo electrónico</label>
+            <input type="email" class="form-control" id="CorreoServicio" name="Correo">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Dirección</label>
+            <input type="text" class="form-control" id="DireccionServicio" name="Direccion" placeholder="Ej: Cra 10 #20-30">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Barrio</label>
+            <input type="text" class="form-control" id="BarrioServicio" name="Barrio">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Redes Sociales</label>
+            <input type="text" class="form-control" id="RedesSocialesServicio" name="RedesSociales">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Foto de certificado</label>
+            <input type="file" class="form-control" id="Certificado" name="Certificado" accept="image/*">
+        </div>
+                <div class="mb-3">
+            <label for="dias" class="form-label">Días de atención</label>
+            <input type="text" class="form-control" id="diasAtencionServicio" name="DiasAtencion" placeholder="ej: Lunes-Viernes">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Horario de atención</label>
+                <div class="row g-2">
+                    <div class="col"><input type="time" class="form-control" id="horaInicioServicio" name="horaInicio"></div>
+                    <div class="col-auto align-self-center">a</div>
+                    <div class="col"><input type="time" class="form-control" id="horaFinServicio" name="horaFin"></div>
+                </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="d-flex justify-content-between mt-4">
+            <button type="submit" class="btn btn-primary">Registrar</button>
+            <a href="ingreso.html" class="btn btn-secondary">Volver</a>
+        </div>
+
+    </div>
+    </form>
 </section>
 
 <footer class="footer" id="somos">
@@ -262,6 +225,7 @@
     </div>
 </footer>
     <script src="JS/animacion.js"></script>
+    <script src="JS/registro.js"></script>
 
 </body>
 </html>
