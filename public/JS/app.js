@@ -1,29 +1,43 @@
-//este codigo es para el apartado de ingreso del usuario verificando credenciales//*
-document.getElementById('btn').addEventListener('click', async function(event) {
-    event.preventDefault(); // Evita el envío del formulario
+// 📂 public/JS/app.js
 
-    const username = document.getElementById('user-name').value.trim();
-    const password = document.getElementById('input-pass').value.trim();
-    const mensajeError = document.getElementById('mensaje-error');
+document.getElementById('loginForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
 
-    try {
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username, password })
-        });
+  const username = document.getElementById('user-name').value.trim();
+  const password = document.getElementById('input-pass').value.trim();
+  const mensajeError = document.getElementById('mensaje-error');
 
-        const data = await response.json();
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
 
-        if (data.success) {
-            window.location.href = 'perfil_usuario.html';
-        } else {
-            mensajeError.textContent = 'Usuario y/o contraseña errada.';
-        }
-    } catch (error) {
-        console.error('❌ Error al conectar con el servidor:', error);
-        mensajeError.textContent = 'Error en el servidor. Intenta más tarde.';
+    const data = await response.json();
+
+    if (data.success) {
+      // ✅ Guardar en localStorage
+      localStorage.setItem("usuarioId", data.idUsuario);
+      localStorage.setItem("tipoUsuario", data.tipo);
+      localStorage.setItem("nombreUsuario", data.usuario);
+
+      // ✅ Redirigir según tipo de usuario
+      if (data.tipo === 'Natural') {
+        window.location.href = '/Natural/perfil_usuario.html';
+      } else if (data.tipo === 'Comerciante') {
+        window.location.href = '/Comerciante/perfil_comerciante.html';
+      } else if (data.tipo === 'PrestadorServicio') {
+        window.location.href = '/PrestadorServicios/perfil_servicios.html';
+      } else {
+        window.location.href = '/General/index.html';
+      }
+
+    } else {
+      mensajeError.textContent = data.error || 'Usuario y/o contraseña errada.';
     }
+  } catch (error) {
+    console.error('❌ Error al conectar con el servidor:', error);
+    mensajeError.textContent = 'Error en el servidor. Intenta más tarde.';
+  }
 });

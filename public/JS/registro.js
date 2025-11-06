@@ -1,96 +1,166 @@
-
-//codigo para insercion a la base de datos
+// registro.js — versión segura para los tres tipos de usuario(REGISTRAR NUEVOS USUARIOS)
 
 document.addEventListener("DOMContentLoaded", () => {
-    const formRegistro = document.getElementById("formRegistro");
+  const tipoUsuarioSelect = document.getElementById("tipoUsuario");
+  const formRegistro = document.getElementById("formRegistro");
 
-    formRegistro.addEventListener("submit", async (e) => {
-        e.preventDefault();
+  const formNatural = document.getElementById("formNatural");
+  const formComerciante = document.getElementById("formComerciante");
+  const formServicio = document.getElementById("formServicio");
 
-        // Detecta el tipo de usuario
-        const tipoUsuario = document.getElementById("tipoUsuario").value;
+  // --- 🔹 Mostrar/Ocultar formularios según selección ---
+  tipoUsuarioSelect.addEventListener("change", () => {
+    const tipo = tipoUsuarioSelect.value;
 
-        // Usamos FormData porque incluye texto + imágenes
-        const formData = new FormData();
+    // Ocultar todos
+    formNatural.style.display = "none";
+    formComerciante.style.display = "none";
+    formServicio.style.display = "none";
 
-        // Datos comunes (Perfil) según el tipo de usuario
-        if (tipoUsuario === "natural") {
-            formData.append("Usuario", document.getElementById("Usuario").value);
-            formData.append("Nombre", document.getElementById("Nombre").value);
-            formData.append("Correo", document.getElementById("Correo").value);
-            formData.append("Direccion", document.getElementById("Direccion").value);
-            formData.append("Telefono", document.getElementById("Telefono").value);
-            formData.append("Barrio", document.getElementById("Barrio").value);
+    // Quitar todos los "required"
+    formRegistro.querySelectorAll("[required]").forEach(el => el.removeAttribute("required"));
 
-            const fotoPerfil = document.getElementById("FotoPerfil")?.files[0];
-            if (fotoPerfil) formData.append("FotoPerfil", fotoPerfil);
-        }
+    // Mostrar y activar "required" solo para el tipo seleccionado
+    if (tipo === "natural") {
+      formNatural.style.display = "block";
+      formNatural.querySelectorAll("[data-required='true']").forEach(el => el.setAttribute("required", ""));
+    } else if (tipo === "comerciante") {
+      formComerciante.style.display = "block";
+      formComerciante.querySelectorAll("[data-required='true']").forEach(el => el.setAttribute("required", ""));
+    } else if (tipo === "servicio") {
+      formServicio.style.display = "block";
+      formServicio.querySelectorAll("[data-required='true']").forEach(el => el.setAttribute("required", ""));
+    }
+  });
 
-        if (tipoUsuario === "comerciante") {
-            formData.append("Usuario", document.getElementById("UsuarioComercio").value);
-            formData.append("Nombre", document.getElementById("NombreComerciante").value);
-            formData.append("Correo", document.getElementById("CorreoComercio").value);
-            formData.append("Direccion", document.getElementById("DireccionComercio").value);
-            formData.append("Telefono", document.getElementById("TelefonoComercio").value);
-            formData.append("Barrio", document.getElementById("BarrioComercio").value);
+  // --- 🔹 Evento de envío del formulario ---
+  formRegistro.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-            const fotoPerfil = document.getElementById("fotoPerfilComercio")?.files[0];
-            if (fotoPerfil) formData.append("FotoPerfil", fotoPerfil);
+    const tipoUsuario = tipoUsuarioSelect.value;
+    if (!tipoUsuario) {
+      alert("Por favor, selecciona un tipo de usuario.");
+      return;
+    }
 
-            formData.append("DiasAtencion", document.getElementById("DiasAtencion").value);
-            formData.append("RedesSociales", document.getElementById("RedesSociales").value);
-            formData.append("NombreComercio", document.getElementById("NombreComercio").value);
-            formData.append("NitComercio", document.getElementById("InfoVendedor").value);
-            formData.append("HoraInicio", document.getElementById("horaInicio").value);
-            formData.append("HoraFin", document.getElementById("horaFin").value);
-        }
+    const formData = new FormData();
 
-        if (tipoUsuario === "servicio") {
-            formData.append("Usuario", document.getElementById("UsuarioServicio").value);
-            formData.append("Nombre", document.getElementById("NombreServicio").value);
-            formData.append("Correo", document.getElementById("CorreoServicio").value);
-            formData.append("Direccion", document.getElementById("DireccionServicio").value);
-            formData.append("Telefono", document.getElementById("TelefonoServicio").value);
-            formData.append("Barrio", document.getElementById("BarrioServicio").value);
+    // --- Campos comunes según tipo ---
+    if (tipoUsuario === "natural") {
+      formData.append("TipoUsuario", "Natural"); // ✅ agregado
+      formData.append("Usuario", document.getElementById("Usuario").value);
+      formData.append("Nombre", document.getElementById("Nombre").value);
+      formData.append("Correo", document.getElementById("Correo").value);
+      formData.append("Direccion", document.getElementById("Direccion").value);
+      formData.append("Telefono", document.getElementById("Telefono").value);
+      formData.append("Barrio", document.getElementById("Barrio").value);
 
-            const fotoPerfil = document.getElementById("fotoPerfilServicio")?.files[0];
-            if (fotoPerfil) formData.append("FotoPerfil", fotoPerfil);
+      const fotoPerfil = document.getElementById("FotoPerfil")?.files?.[0];
+      if (fotoPerfil) formData.append("FotoPerfil", fotoPerfil);
+    }
 
-            const certificado = document.getElementById("Certificado")?.files[0];
-            if (certificado) formData.append("Certificado", certificado);
+if (tipoUsuario === "comerciante") {
+  const getVal = (id) => document.getElementById(id)?.value?.trim() || "";
 
-            formData.append("DiasAtencion", document.getElementById("diasAtencionServicio").value);
-            formData.append("RedesSociales", document.getElementById("RedesSocialesServicio").value);
-            formData.append("HoraInicio", document.getElementById("horaInicioServicio").value);
-            formData.append("HoraFin", document.getElementById("horaFinServicio").value);
-        }
+  formData.append("TipoUsuario", "Comerciante");
+  formData.append("Usuario", getVal("UsuarioComercio"));
+  formData.append("Nombre", getVal("NombreComerciante"));
+  formData.append("Correo", getVal("CorreoComercio"));
 
-        // Tipo de usuario general
-        formData.append("TipoUsuario", tipoUsuario);
+  // --- Construir dirección completa ---
+  const tipoVia = getVal("TipoVia");
+  const numPrincipal = getVal("NumPrincipal");
+  const letra1 = getVal("Letra1");
+  const numSecundario = getVal("NumSecundario");
+  const letra2 = getVal("Letra2");
+  const numFinal = getVal("NumFinal");
+  const letra3 = getVal("Letra3");
 
-        try {
-            const res = await fetch("/api/registro", {
-                method: "POST",
-                body: formData // 👈 no headers porque FormData se encarga
-            });
+  let direccionCompleta = `${tipoVia} ${numPrincipal} ${letra1}`.trim();
+  if (numSecundario || letra2) direccionCompleta += ` #${numSecundario} ${letra2}`.trim();
+  if (numFinal || letra3) direccionCompleta += ` - ${numFinal} ${letra3}`.trim();
 
-            const data = await res.json();
+  if (!direccionCompleta || direccionCompleta.trim() === "" || direccionCompleta === "undefined") {
+    direccionCompleta = "Sin dirección especificada";
+  }
 
-            if (res.ok) {
-                alert("✅ Registro exitoso");
-                console.log("Respuesta del servidor:", data);
-                window.location.href = "ingreso.html";
-            } else {
-                alert("⚠️ Error: " + (data.error || "No se pudo registrar"));
-            }
-        } catch (err) {
-            console.error("Error en fetch:", err);
-            alert("⚠️ Error al conectar con el servidor");
-        }
-    });
+  formData.append("Direccion", direccionCompleta);
+  formData.append("Telefono", getVal("TelefonoComercio"));
+  formData.append("Barrio", getVal("BarrioComercio"));
+  formData.append("DiasAtencion", getVal("DiasAtencion"));
+  formData.append("RedesSociales", getVal("RedesSociales"));
+  formData.append("NombreComercio", getVal("NombreComercio"));
+  formData.append("NitComercio", getVal("InfoVendedor"));
+  formData.append("HoraInicio", getVal("horaInicio"));
+  formData.append("HoraFin", getVal("horaFin"));
+
+  const fotoPerfil = document.getElementById("fotoPerfilComercio")?.files?.[0];
+  if (fotoPerfil) formData.append("FotoPerfil", fotoPerfil);
+
+  // --- 🔹 Convertir dirección a coordenadas usando Nominatim ---
+  const direccion = direccionCompleta; // usamos la misma dirección ya construida
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion + ", Bogotá, Colombia")}`);
+    const dataGeo = await response.json();
+
+    if (dataGeo && dataGeo.length > 0) {
+      formData.append("latitud", dataGeo[0].lat);
+      formData.append("longitud", dataGeo[0].lon);
+      console.log("📍 Coordenadas obtenidas:", dataGeo[0].lat, dataGeo[0].lon);
+    } else {
+      console.warn("⚠️ No se encontraron coordenadas, se usarán valores por defecto");
+      formData.append("latitud", "0.0");
+      formData.append("longitud", "0.0");
+    }
+  } catch (error) {
+    console.error("Error obteniendo coordenadas:", error);
+    formData.append("latitud", "0.0");
+    formData.append("longitud", "0.0");
+  }
+}
+
+
+    if (tipoUsuario === "servicio" || tipoUsuario === "prestadorservicios") {
+      const getVal = (id) => document.getElementById(id)?.value || "";
+
+      formData.append("TipoUsuario", "PrestadorServicio"); // ✅ ya estaba correcto
+      formData.append("Usuario", getVal("UsuarioServicio"));
+      formData.append("Nombre", getVal("NombreServicio"));
+      formData.append("Correo", getVal("CorreoServicio"));
+      formData.append("Telefono", getVal("TelefonoServicio"));
+      formData.append("Direccion", getVal("DireccionServicio"));
+      formData.append("Barrio", getVal("BarrioServicio"));
+      formData.append("RedesSociales", getVal("RedesSocialesServicio"));
+      formData.append("DiasAtencion", getVal("diasAtencionServicio"));
+      formData.append("HoraInicio", getVal("horaInicioServicio"));
+      formData.append("HoraFin", getVal("horaFinServicio"));
+
+      const fotoPerfil = document.getElementById("FotoPerfilServicio")?.files?.[0];
+      const certificado = document.getElementById("Certificado")?.files?.[0];
+
+      if (fotoPerfil) formData.append("FotoPerfil", fotoPerfil);
+      if (certificado) formData.append("Certificado", certificado);
+    }
+
+    // --- 🔹 Enviar al servidor ---
+    try {
+      const res = await fetch("/api/registro", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("✅ Registro exitoso");
+        console.log("Respuesta del servidor:", data);
+        window.location.href = "ingreso.html";
+      } else {
+        alert("⚠️ Error: " + (data.error || "No se pudo registrar"));
+      }
+    } catch (err) {
+      console.error("Error en fetch:", err);
+      alert("⚠️ Error al conectar con el servidor");
+    }
+  });
 });
-
-
-
-
-
