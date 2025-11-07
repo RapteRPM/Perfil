@@ -241,35 +241,32 @@ app.listen(port, () => {
 // ----------------------
 // CONSULTAR HISTORIAL DE COMPRAS - USUARIO NATURAL
 // ----------------------
-
-// HISTORIAL DE COMPRAS - CONSULTA
-// ===============================
 app.get('/api/historial', async (req, res) => {
-  const { fechaInicio, fechaFin, tipoProducto, ordenPrecio } = req.query;
+  const { fechaInicio, fechaFin, tipoProducto, ordenPrecio, usuarioId } = req.query;
 
   let query = `
-      SELECT 
-          pub.NombreProducto AS producto,
-          cat.NombreCategoria AS categoria,
-          f.FechaCompra AS fecha,
-          f.TotalPago AS precio,
-          f.MetodoPago AS metodoPago,
-          f.Estado AS estado
-      FROM Factura f
-      JOIN Carrito ca ON f.Carrito = ca.IdCarrito
-      JOIN Publicacion pub ON ca.Publicacion = pub.IdPublicacion
-      JOIN Categoria cat ON pub.Categoria = cat.IdCategoria
-      WHERE 1 = 1
+    SELECT 
+        pub.NombreProducto AS producto,
+        cat.NombreCategoria AS categoria,
+        f.FechaCompra AS fecha,
+        df.Total AS precio,
+        f.MetodoPago AS metodoPago,
+        COALESCE(f.Estado, df.Estado) AS estado
+    FROM DetalleFactura df
+    LEFT JOIN Factura f ON f.DetalleFactura = df.IdDetalleFactura
+    JOIN Publicacion pub ON df.Publicacion = pub.IdPublicacion
+    JOIN Categoria cat ON pub.Categoria = cat.IdCategoria
+    WHERE df.Usuario = ?
   `;
 
-  const params = [];
+  const params = [usuarioId];
 
   if (fechaInicio) {
-    query += ' AND f.FechaCompra >= ?';
+    query += ' AND (f.FechaCompra >= ? OR f.FechaCompra IS NULL)';
     params.push(fechaInicio);
   }
   if (fechaFin) {
-    query += ' AND f.FechaCompra <= ?';
+    query += ' AND (f.FechaCompra <= ? OR f.FechaCompra IS NULL)';
     params.push(fechaFin);
   }
   if (tipoProducto) {
@@ -277,17 +274,14 @@ app.get('/api/historial', async (req, res) => {
     params.push(tipoProducto.toLowerCase());
   }
 
-  if (ordenPrecio === 'asc') query += ' ORDER BY f.TotalPago ASC';
-  else if (ordenPrecio === 'desc') query += ' ORDER BY f.TotalPago DESC';
+  if (ordenPrecio === 'asc') query += ' ORDER BY df.Total ASC';
+  else if (ordenPrecio === 'desc') query += ' ORDER BY df.Total DESC';
 
   try {
     const [results] = await pool.query(query, params);
 
-    if (results.length === 0) {
-      console.warn('⚠️ Sin resultados en historial.');
-    } else {
-      console.log(`✅ Resultados de historial: ${results.length}`);
-    }
+    if (!results.length) console.warn('⚠️ Sin resultados en historial.');
+    else console.log(`✅ Resultados del historial: ${results.length}`);
 
     res.json(results);
   } catch (err) {
@@ -295,6 +289,29 @@ app.get('/api/historial', async (req, res) => {
     res.status(500).json({ error: 'Error en la consulta de historial' });
   }
 });
+
+// Actualizar estado de detalleFactura
+app.put('/api/historial/estado/:id', async (req, res) => {
+    const { id } = req.params;
+    const { estado } = req.body;
+
+    try {
+        const [result] = await db.query(
+            'UPDATE detalleFactura SET estado = ? WHERE idDetalleFactura = ?',
+            [estado, id]
+        );
+
+        if (result.affectedRows > 0) {
+            res.json({ success: true, message: 'Estado actualizado correctamente' });
+        } else {
+            res.json({ success: false, message: 'No se encontró el registro' });
+        }
+    } catch (error) {
+        console.error('Error al actualizar estado:', error);
+        res.status(500).json({ success: false, message: 'Error en el servidor' });
+    }
+});
+
 
 // ===============================
 //  DESCARGAR EXCEL HISTORIAL COMPRAS - USUARIO NATURAL
@@ -308,12 +325,12 @@ app.get('/api/historial/excel', async (req, res) => {
           pub.NombreProducto AS producto,
           cat.NombreCategoria AS categoria,
           f.FechaCompra AS fecha,
-          f.TotalPago AS total,
+          df.Total AS total,
           f.MetodoPago AS metodoPago,
           f.Estado AS estado
-      FROM Factura f
-      JOIN Carrito ca ON f.Carrito = ca.IdCarrito
-      JOIN Publicacion pub ON ca.Publicacion = pub.IdPublicacion
+      FROM DetalleFactura df
+      JOIN Factura f ON f.DetalleFactura = df.IdDetalleFactura
+      JOIN Publicacion pub ON df.Publicacion = pub.IdPublicacion
       JOIN Categoria cat ON pub.Categoria = cat.IdCategoria
       WHERE 1 = 1
   `;
@@ -333,8 +350,8 @@ app.get('/api/historial/excel', async (req, res) => {
     params.push(tipoProducto.toLowerCase());
   }
 
-  if (ordenPrecio === 'asc') query += ' ORDER BY f.TotalPago ASC';
-  else if (ordenPrecio === 'desc') query += ' ORDER BY f.TotalPago DESC';
+  if (ordenPrecio === 'asc') query += ' ORDER BY df.Total ASC';
+  else if (ordenPrecio === 'desc') query += ' ORDER BY df.Total DESC';
 
   try {
     const [results] = await pool.query(query, params);
@@ -383,6 +400,7 @@ app.get('/api/historial/excel', async (req, res) => {
     res.status(500).send('Error al generar Excel');
   }
 });
+
 
 // ==============================
 //  HISTORIAL DE VENTAS - USUARIO COMERCIANTE
@@ -1838,7 +1856,6 @@ app.get('/api/proceso-compra', async (req, res) => {
     // Normalizar estructura que espera el frontend
     const resultado = rows.map(r => ({
       IdCarrito: r.IdCarrito,
-      Producto: r.Producto,
       Cantidad: Number(r.Cantidad),
       Precio: Number(r.Precio),
       Subtotal: Number(r.Subtotal),
@@ -1860,78 +1877,127 @@ app.get('/api/proceso-compra', async (req, res) => {
 
 //PROCESO DE COMPRA//
 
+// ✅ FINALIZAR COMPRA
 app.post("/api/finalizar-compra", async (req, res) => {
+  const conn = await pool.getConnection();
   try {
-    console.log("📦 Recibiendo solicitud para finalizar compra...");
+    console.log("📦 Finalizando compra...");
 
-    const { usuarioId, metodoPago } = req.body;
-
-    console.log("🧾 Datos recibidos:", req.body);
+    const usuarioSesion = req.session && req.session.usuario;
+    const usuarioId = (usuarioSesion && usuarioSesion.id) || req.body.usuarioId || null;
+    const metodoPago = req.body.metodoPago;
 
     if (!usuarioId || !metodoPago) {
-      console.warn("⚠️ Faltan datos en la solicitud:", req.body);
-      return res.status(400).json({ message: "Faltan datos de usuario o método de pago." });
+      return res.status(400).json({ message: "Faltan datos del usuario o método de pago." });
     }
 
-    // 1️⃣ Consultar los productos del carrito pendientes
-    const [carrito] = await pool.query(`
+    await conn.beginTransaction();
+
+    // 1️⃣ Obtener productos pendientes del carrito
+    const [carritoRows] = await conn.query(`
       SELECT 
         c.IdCarrito, 
+        c.Cantidad, 
         pub.IdPublicacion,
-        p.IdProducto,
-        p.NombreProducto,
-        p.Precio,
-        c.Cantidad,
-        (p.Precio * c.Cantidad) AS Subtotal
+        pub.NombreProducto, 
+        pub.Precio, 
+        (pub.Precio * c.Cantidad) AS Subtotal,
+        pub.Comerciante AS Comercio
       FROM Carrito c
       JOIN Publicacion pub ON c.Publicacion = pub.IdPublicacion
-      JOIN Producto p ON p.PublicacionComercio = pub.IdPublicacion
       WHERE c.UsuarioNat = ? AND c.Estado = 'Pendiente'
     `, [usuarioId]);
 
-    console.log("🛒 Productos en carrito:", carrito.length);
-
-    if (carrito.length === 0) {
+    if (!carritoRows.length) {
+      await conn.rollback();
       return res.status(400).json({ message: "No hay productos pendientes en el carrito." });
     }
 
-    // 2️⃣ Crear registros en DetalleFactura
+    // 2️⃣ Insertar DetalleFactura y ControlAgendaComercio
     let totalCompra = 0;
-    for (const item of carrito) {
-      totalCompra += item.Subtotal;
-      await pool.query(
-        `INSERT INTO DetalleFactura (Carrito, Producto, Cantidad, PrecioUnitario, Total, Estado)
+    const detalleIds = [];
+
+    for (const item of carritoRows) {
+      totalCompra += Number(item.Subtotal);
+
+      // Insertar detalle de factura
+      const [insertDetalle] = await conn.query(
+        `INSERT INTO DetalleFactura (Publicacion, Usuario, Cantidad, PrecioUnitario, Total, Estado)
          VALUES (?, ?, ?, ?, ?, 'Pendiente')`,
-        [item.IdCarrito, item.IdProducto, item.Cantidad, item.Precio, item.Subtotal]
+        [item.IdPublicacion, usuarioId, item.Cantidad, item.Precio, item.Subtotal]
+      );
+
+      const detalleId = insertDetalle.insertId;
+      detalleIds.push(detalleId);
+
+      // 3️⃣ Insertar en ControlAgendaComercio
+      let modoServicio = "Visita al taller";
+      let tipoServicio = 1;
+      let fecha = null;
+      let hora = null;
+      let comentarios = null;
+
+      if (metodoPago === "recoger") {
+        modoServicio = "Visita al taller";
+        tipoServicio = 1;
+        fecha = req.body.fechaRecoger || null;
+        hora = req.body.horaRecoger || null;
+        comentarios = req.body.comentariosRecoger || null;
+      } else {
+        // PSE o contraentrega → se asume "Domicilio"
+        modoServicio = "Domicilio";
+        tipoServicio = 2;
+      }
+
+      await conn.query(
+        `INSERT INTO ControlAgendaComercio 
+         (Comercio, DetalleFactura, TipoServicio, ModoServicio, FechaServicio, HoraServicio, ComentariosAdicionales)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [item.Comercio, detalleId, tipoServicio, modoServicio, fecha, hora, comentarios]
       );
     }
 
-    // 3️⃣ Crear la factura principal
-    const [facturaResult] = await pool.query(
-      `INSERT INTO Factura (DetalleFactura, Usuario, TotalPago, MetodoPago, Estado)
-       VALUES (?, ?, ?, ?, 'Pago exitoso')`,
-      [carrito[0].IdCarrito, usuarioId, totalCompra, metodoPago]
-    );
+    // 4️⃣ Insertar factura (solo si es PSE)
+    let message = "";
+    let redirect = null;
 
-    // 4️⃣ Marcar carrito como procesado
-    await pool.query(
-      `UPDATE Carrito SET Estado = 'Procesado' WHERE UsuarioNat = ? AND Estado = 'Pendiente'`,
-      [usuarioId]
-    );
+    if (metodoPago === "pse") {
+      await conn.query(
+        `INSERT INTO Factura (DetalleFactura, Usuario, TotalPago, MetodoPago, Estado)
+         VALUES (?, ?, ?, ?, 'Pago exitoso')`,
+        [detalleIds[0], usuarioId, totalCompra, metodoPago]
+      );
+      message = "Pago exitoso. Redirigiendo a factura...";
+      redirect = "/Natural/Factura_compra.html";
+    }
 
-    console.log("✅ Compra registrada correctamente. Factura:", facturaResult.insertId);
+    if (metodoPago === "contraentrega") {
+      message = "Su proceso se registró con éxito. Puede hacer seguimiento en 'Historial'.";
+    }
 
-    res.json({
-      success: true,
-      message: "Compra finalizada correctamente",
-      facturaId: facturaResult.insertId,
-    });
+    if (metodoPago === "recoger") {
+      message = "Su solicitud fue enviada al comercio con éxito.";
+    }
 
-  } catch (error) {
-    console.error("❌ Error en /api/finalizar-compra:", error);
-    res.status(500).json({ message: "Error al finalizar la compra", error: error.message });
+    // 5️⃣ Vaciar carrito del usuario
+    await conn.query(`DELETE FROM Carrito WHERE UsuarioNat = ?`, [usuarioId]);
+
+    await conn.commit();
+    console.log("✅ Compra completada con método:", metodoPago);
+
+    return res.json({ success: true, message, redirect });
+
+  } catch (err) {
+    await conn.rollback();
+    console.error("❌ Error al finalizar compra:", err);
+    res.status(500).json({ message: "Error al finalizar la compra", error: err.message });
+  } finally {
+    conn.release();
   }
 });
+
+
+
 
 
 
@@ -2004,4 +2070,3 @@ app.get('/api/factura/:id', async (req, res) => {
     res.status(500).json({ msg: 'Error al obtener factura' });
   }
 });
-

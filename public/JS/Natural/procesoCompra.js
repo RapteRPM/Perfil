@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const campoRecoger = document.getElementById("campoRecoger");
   const infoComercioDiv = document.getElementById("infoComercio");
 
-  // Mostrar/ocultar campos adicionales
+  // Mostrar/ocultar campos adicionales para recoger en comercio
   document.querySelectorAll("input[name='metodoPago']").forEach(radio => {
     radio.addEventListener("change", () => {
       if (radio.value === "recoger" && radio.checked) {
@@ -17,7 +17,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Cargar productos del carrito desde la API
+  // 🛒 Cargar productos del carrito desde la API
+  let comercio = { nombre: '', direccion: '' };
   try {
     const resp = await fetch("/api/proceso-compra");
     if (!resp.ok) throw new Error("Error al obtener productos del carrito");
@@ -33,9 +34,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Usamos el primer registro para extraer datos del comercio
-    const comercio = {
-      nombre: carrito[0].NombreComercio || carrito[0].NombreUsuarioComercio || '',
-      direccion: carrito[0].DireccionComercio || ''
+    comercio = {
+      nombre: carrito[0].NombreComercio || carrito[0].NombreUsuarioComercio || "No especificado",
+      direccion: carrito[0].DireccionComercio || "No especificada"
     };
 
     carrito.forEach(item => {
@@ -54,58 +55,86 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     totalGeneral.textContent = `$${total.toLocaleString()}`;
 
-    // Mostrar info del comercio real
+    // Mostrar información del comercio
     if (infoComercioDiv) {
       infoComercioDiv.innerHTML = `
-        <strong>Comercio:</strong> ${comercio.nombre || 'No especificado'}<br>
-        <small>Dirección: ${comercio.direccion || 'No especificado'}</small>
+        <strong>Comercio:</strong> ${comercio.nombre}<br>
+        <small>Dirección: ${comercio.direccion}</small>
       `;
     }
-
   } catch (err) {
     console.error("❌ Error cargando proceso de compra:", err);
-    tabla.innerHTML = `<tr><td colspan="4" class="text-center text-danger">⚠️ Error al cargar los productos. Intenta nuevamente.</td></tr>`;
+    tabla.innerHTML = `<tr><td colspan="4" class="text-center text-danger">⚠️ Error al cargar los productos.</td></tr>`;
     totalGeneral.textContent = "$0.00";
   }
 
-  // Finalizar compra
+  // 💳 Finalizar compra
   btnFinalizar.addEventListener("click", async (e) => {
     e.preventDefault();
+
     const metodoPago = document.querySelector("input[name='metodoPago']:checked")?.value;
     if (!metodoPago) return alert("Selecciona un método de pago.");
 
+    // Obtiene el usuario desde localStorage o sesión
+    const usuarioId = localStorage.getItem("usuarioId") || null;
+
     const datos = {
-      nombre: document.getElementById("nombreComprador").value,
-      correo: document.getElementById("correoComprador").value,
-      telefono: document.getElementById("telefonoComprador").value,
-      direccion: document.getElementById("direccionComprador").value,
+      usuarioId,
+      nombre: document.getElementById("nombreComprador").value.trim(),
+      correo: document.getElementById("correoComprador").value.trim(),
+      telefono: document.getElementById("telefonoComprador").value.trim(),
+      direccion: document.getElementById("direccionComprador").value.trim(),
       metodoPago,
       fechaRecoger: document.getElementById("fechaRecoger")?.value || null,
-      horaRecoger: document.getElementById("horaRecoger")?.value || null
+      horaRecoger: document.getElementById("horaRecoger")?.value || null,
+      comentariosRecoger: document.getElementById("comentariosRecoger")?.value || null
     };
 
+    // Validaciones básicas
+    if (!datos.nombre || !datos.correo || !datos.telefono || !datos.direccion) {
+      return alert("Por favor completa todos los datos personales antes de finalizar la compra.");
+    }
+
+    if (metodoPago === "recoger" && (!datos.fechaRecoger || !datos.horaRecoger)) {
+      return alert("Debes seleccionar fecha y hora para recoger en comercio.");
+    }
+
     try {
-      const r = await fetch('/api/finalizar-compra', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      // 🔄 Enviar datos al backend
+      const response = await fetch("/api/finalizar-compra", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datos)
       });
 
-      const result = await r.json();
+      const result = await response.json();
 
-      if (r.ok) {
+      if (response.ok && result.success) {
         if (result.redirect) {
+          // 🔁 Redirigir a la factura (caso PSE)
+          alert(result.message);
           window.location.href = result.redirect;
         } else {
-          alert('✅ Compra registrada correctamente');
-          window.location.href = '/index.html';
+          // Mostrar mensaje en la misma página
+          const mensajeDiv = document.createElement("div");
+          mensajeDiv.className = "alert alert-success mt-4 text-center";
+          mensajeDiv.textContent = result.message;
+          document.querySelector("main.container").appendChild(mensajeDiv);
+
+          // Limpiar productos del carrito en la tabla
+          tabla.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No hay productos en el carrito.</td></tr>`;
+          totalGeneral.textContent = "$0.00";
+
+          // Ocultar botón para evitar reenvíos
+          btnFinalizar.disabled = true;
+          btnFinalizar.textContent = "Compra registrada";
         }
       } else {
-        alert('❌ ' + (result.msg || 'Error al registrar la compra'));
+        alert("❌ " + (result.message || "Error al registrar la compra."));
       }
     } catch (err) {
-      console.error('Error finalizando compra:', err);
-      alert('❌ Error de conexión al finalizar compra.');
+      console.error("❌ Error al finalizar compra:", err);
+      alert("Error de conexión con el servidor.");
     }
   });
 });
