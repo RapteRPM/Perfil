@@ -52,64 +52,20 @@
         <div class="flex items-center space-x-8 mt-3 md:mt-0">
           <a href="perfil_servicios.html" class="hover:text-gray-200 transition">Inicio</a>
           <a href="publicar_grua.html" class="hover:text-gray-200 transition">Publicar</a>
-          <a href="historia_servicios.html" class="hover:text-gray-200 transition">Historial</a>
-          <a href="../CentroAyuda.html" class="hover:text-gray-200 transition">Centro de ayuda</a>
+          <a href="historia_servicios.html" class="hover:text-gray-200 transition">Mis servicios</a>
+          <a href="../General/CentroAyuda.html" class="hover:text-gray-200 transition">Centro de ayuda</a>
         </div>
       </div>
     </nav>
   </header>
 
   <!-- CONTENIDO PRINCIPAL -->
-  <main class="container mt-8">
-    <h2 class="text-center fw-bold mb-5 text-3xl">Solicitudes Recientes</h2>
-    <div class="row g-4">
-      <!-- Solicitud 1 -->
-      <div class="col-md-6">
-        <div class="card card-solicitud p-4">
-          <h5 class="fw-bold text-lg mb-2"><i class="fas fa-car-side text-blue-400 me-2"></i> Cliente: Juan Pérez</h5>
-          <p><strong>Tipo de servicio:</strong> Grúa a domicilio</p>
-          <p><strong>Ubicación:</strong> Calle 45 #12-34, Bogotá</p>
-          <p><strong>Fecha solicitada:</strong> 2025-09-29</p>
-          <span class="badge bg-warning text-dark">Pendiente</span>
-          <div class="mt-4 d-flex gap-2">
-            <button class="btn btn-success btn-sm"><i class="fas fa-check-circle"></i> Aceptar</button>
-            <button class="btn btn-danger btn-sm"><i class="fas fa-times-circle"></i> Rechazar</button>
-            <button class="btn btn-secondary btn-sm"><i class="fas fa-clipboard-check"></i> Marcar atendido</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Solicitud 2 -->
-      <div class="col-md-6">
-        <div class="card card-solicitud p-4">
-          <h5 class="fw-bold text-lg mb-2"><i class="fas fa-truck-pickup text-blue-400 me-2"></i> Cliente: Ana Torres</h5>
-          <p><strong>Tipo de servicio:</strong> Recoger en taller</p>
-          <p><strong>Ubicación:</strong> Taller RPM - Cra 20 #15-40</p>
-          <p><strong>Fecha solicitada:</strong> 2025-09-30</p>
-          <span class="badge bg-info text-dark">En revisión</span>
-          <div class="mt-4 d-flex gap-2">
-            <button class="btn btn-success btn-sm"><i class="fas fa-check-circle"></i> Aceptar</button>
-            <button class="btn btn-danger btn-sm"><i class="fas fa-times-circle"></i> Rechazar</button>
-            <button class="btn btn-secondary btn-sm"><i class="fas fa-clipboard-check"></i> Marcar atendido</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Solicitud 3 -->
-      <div class="col-md-6">
-        <div class="card card-solicitud p-4">
-          <h5 class="fw-bold text-lg mb-2"><i class="fas fa-truck-monster text-blue-400 me-2"></i> Cliente: Luis Gómez</h5>
-          <p><strong>Tipo de servicio:</strong> Grúa intermunicipal</p>
-          <p><strong>Ubicación:</strong> Bogotá → Tunja</p>
-          <p><strong>Fecha solicitada:</strong> 2025-10-01</p>
-          <span class="badge bg-success text-light">Aceptado</span>
-          <div class="mt-4 d-flex gap-2">
-            <button class="btn btn-secondary btn-sm"><i class="fas fa-clipboard-check"></i> Marcar atendido</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
+<main class="container mt-8">
+  <h2 class="text-center fw-bold mb-5 text-3xl">Solicitudes Recientes</h2>
+  <div class="row g-4" id="contenedorSolicitudes">
+    <!-- Las tarjetas se insertarán dinámicamente aquí -->
+  </div>
+</main>
 
   <!-- FOOTER -->
   <footer class="footer text-white py-10 px-6 mt-20">
@@ -141,5 +97,6 @@
   </footer>
   <script src="../JS/perfil_usuario.js"></script>
   <script src="../JS/UsuarioSesion.js"></script>
+  <script src="../JS/Prestador/AgendaServicios.js"></script>
 </body>
 </html>

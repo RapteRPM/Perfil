@@ -18,9 +18,12 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
 
     if (data.success) {
       // ✅ Guardar en localStorage
-      localStorage.setItem("usuarioId", data.idUsuario);
-      localStorage.setItem("tipoUsuario", data.tipo);
-      localStorage.setItem("nombreUsuario", data.usuario);
+        localStorage.setItem("usuarioActivo", JSON.stringify({
+          id: data.idUsuario,
+          nombre: data.usuario,
+          tipo: data.tipo
+        }));
+
 
       // ✅ Redirigir según tipo de usuario
       if (data.tipo === 'Natural') {

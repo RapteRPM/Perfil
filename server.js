@@ -1,6 +1,7 @@
 // ===============================
 // 📦 Importaciones
 // ===============================
+import { verificarSesion, evitarCache } from './middlewares/sesion.js';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import express from 'express';
@@ -21,10 +22,12 @@ const app = express();
 const port = 3000;
 
 // Configuración general
+app.use("/api/privado", verificarSesion); 
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use("/imagen", express.static(path.join(__dirname, "public/imagen")));
 
 
 // ===============================
@@ -54,9 +57,10 @@ app.use((req, res, next) => {
 // ===============================
 // 🔑 Login
 // ===============================
+import bcrypt from 'bcrypt';
 app.post('/api/login', async (req, res) => {
   try {
-    const { username, password } = req.body; // ✅ nombres iguales a los del frontend
+    const { username, password } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({ error: "Faltan datos" });
@@ -69,7 +73,6 @@ app.post('/api/login', async (req, res) => {
       WHERE TRIM(c.NombreUsuario) = TRIM(?)
     `;
 
-    // 👇 Aquí usamos pool.query() con await
     const [results] = await pool.query(query, [username]);
 
     if (results.length === 0) {
@@ -80,12 +83,12 @@ app.post('/api/login', async (req, res) => {
     const usuario = results[0];
     console.log("🧠 Usuario encontrado:", usuario);
 
-    if (usuario.Contrasena !== password) {
+    const esValida = await bcrypt.compare(password, usuario.Contrasena);
+    if (!esValida) {
       console.warn("⚠️ Contraseña incorrecta para:", username);
       return res.status(401).json({ error: "Contraseña incorrecta" });
     }
 
-    // Guardar sesión
     req.session.usuario = {
       id: usuario.Usuario,
       nombre: usuario.NombreUsuario,
@@ -106,6 +109,7 @@ app.post('/api/login', async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 });
+
 
 // ===============================
 // 👤 Ruta para obtener datos del usuario actual
@@ -149,8 +153,13 @@ app.get('/api/usuario-actual', verificarSesion, async (req, res) => {
     const documento = user.Documento;
     const fotoGuardada = user.FotoPerfil;
 
-    // Ruta absoluta
-    const rutaCarpeta = path.join(__dirname, 'public', 'Imagen', tipo, documento.toString());
+    // ✅ Corrección de nombre de carpeta solo para PrestadorServicio
+    let tipoCarpeta = tipo;
+    if (tipo === "PrestadorServicio") {
+      tipoCarpeta = "PrestadorServicios";
+    }
+
+    const rutaCarpeta = path.join(__dirname, 'public', 'Imagen', tipoCarpeta, documento.toString());
     let fotoRutaFinal = '/image/imagen_perfil.png'; // por defecto
 
     if (fs.existsSync(rutaCarpeta)) {
@@ -159,7 +168,7 @@ app.get('/api/usuario-actual', verificarSesion, async (req, res) => {
         f => f.includes(fotoGuardada) || f.match(/\.(jpg|jpeg|png|webp)$/i)
       );
       if (archivoFoto) {
-        fotoRutaFinal = `/Imagen/${tipo}/${documento}/${archivoFoto}`;
+        fotoRutaFinal = `/Imagen/${tipoCarpeta}/${documento}/${archivoFoto}`;
       }
     } else {
       console.warn(`⚠️ Carpeta de usuario no encontrada: ${rutaCarpeta}`);
@@ -176,6 +185,57 @@ app.get('/api/usuario-actual', verificarSesion, async (req, res) => {
   } catch (err) {
     console.error("❌ Error al obtener usuario actual:", err);
     res.status(500).json({ error: "Error al obtener usuario actual" });
+  }
+});
+
+//----------///
+// SECCION DE RECUPERACION DE CONTRASEÑA//
+
+app.get('/api/usuarios/cedula/:documento', async (req, res) => {
+  const { documento } = req.params;
+
+  try {
+    const [rows] = await pool.query(
+      'SELECT IdUsuario FROM usuario WHERE Documento = ?',
+      [documento]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ msg: 'No se encontró ningún usuario con esa cédula.' });
+    }
+
+    res.json({ idUsuario: rows[0].IdUsuario });
+  } catch (error) {
+    console.error('Error buscando usuario por cédula:', error);
+    res.status(500).json({ msg: 'Error del servidor.' });
+  }
+});
+
+// API PARA CAMBIAR CONTRASEÑA
+app.put('/api/usuarios/:id/contrasena', async (req, res) => {
+  const { id } = req.params;
+  const { nuevaContrasena } = req.body;
+
+  if (!nuevaContrasena || nuevaContrasena.length < 6) {
+    return res.status(400).json({ msg: 'La contraseña debe tener al menos 6 caracteres.' });
+  }
+
+  try {
+    const hash = await bcrypt.hash(nuevaContrasena, 10);
+
+    const [result] = await pool.query(
+      'UPDATE credenciales SET Contrasena = ? WHERE Usuario = ?',
+      [hash, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ msg: 'Usuario no encontrado.' });
+    }
+
+    res.json({ msg: 'Contraseña actualizada correctamente.' });
+  } catch (error) {
+    console.error('Error actualizando contraseña:', error);
+    res.status(500).json({ msg: 'Error del servidor.' });
   }
 });
 
@@ -206,17 +266,6 @@ app.get('/api/verificar-sesion', (req, res) => {
 });
 
 // ===============================
-// 🌐 Middleware de protección de rutas
-// ===============================
-function verificarSesion(req, res, next) {
-  if (!req.session?.usuario) {
-    console.warn('⚠️ Intento de acceso sin sesión activa');
-    return res.redirect('/General/ingreso.html');
-  }
-  next();
-}
-
-// ===============================
 // 🌐 Rutas protegidas
 // ===============================
 app.get('/perfil_usuario.html', verificarSesion, (req, res) => {
@@ -244,99 +293,36 @@ app.listen(port, () => {
 app.get('/api/historial', async (req, res) => {
   const { fechaInicio, fechaFin, tipoProducto, ordenPrecio, usuarioId } = req.query;
 
-  let query = `
-    SELECT 
+    let query = `
+      SELECT
+        df.IdDetalleFactura AS idDetalleFactura,
         pub.NombreProducto AS producto,
-        cat.NombreCategoria AS categoria,
+        c.NombreCategoria AS categoria,
         f.FechaCompra AS fecha,
         df.Total AS precio,
-        f.MetodoPago AS metodoPago,
-        COALESCE(f.Estado, df.Estado) AS estado
-    FROM DetalleFactura df
-    LEFT JOIN Factura f ON f.DetalleFactura = df.IdDetalleFactura
-    JOIN Publicacion pub ON df.Publicacion = pub.IdPublicacion
-    JOIN Categoria cat ON pub.Categoria = cat.IdCategoria
-    WHERE df.Usuario = ?
-  `;
-
-  const params = [usuarioId];
-
-  if (fechaInicio) {
-    query += ' AND (f.FechaCompra >= ? OR f.FechaCompra IS NULL)';
-    params.push(fechaInicio);
-  }
-  if (fechaFin) {
-    query += ' AND (f.FechaCompra <= ? OR f.FechaCompra IS NULL)';
-    params.push(fechaFin);
-  }
-  if (tipoProducto) {
-    query += ' AND LOWER(cat.NombreCategoria) = ?';
-    params.push(tipoProducto.toLowerCase());
-  }
-
-  if (ordenPrecio === 'asc') query += ' ORDER BY df.Total ASC';
-  else if (ordenPrecio === 'desc') query += ' ORDER BY df.Total DESC';
-
-  try {
-    const [results] = await pool.query(query, params);
-
-    if (!results.length) console.warn('⚠️ Sin resultados en historial.');
-    else console.log(`✅ Resultados del historial: ${results.length}`);
-
-    res.json(results);
-  } catch (err) {
-    console.error('❌ Error en la consulta de historial:', err);
-    res.status(500).json({ error: 'Error en la consulta de historial' });
-  }
-});
-
-// Actualizar estado de detalleFactura
-app.put('/api/historial/estado/:id', async (req, res) => {
-    const { id } = req.params;
-    const { estado } = req.body;
-
-    try {
-        const [result] = await db.query(
-            'UPDATE detalleFactura SET estado = ? WHERE idDetalleFactura = ?',
-            [estado, id]
-        );
-
-        if (result.affectedRows > 0) {
-            res.json({ success: true, message: 'Estado actualizado correctamente' });
-        } else {
-            res.json({ success: false, message: 'No se encontró el registro' });
-        }
-    } catch (error) {
-        console.error('Error al actualizar estado:', error);
-        res.status(500).json({ success: false, message: 'Error en el servidor' });
-    }
-});
-
-
-// ===============================
-//  DESCARGAR EXCEL HISTORIAL COMPRAS - USUARIO NATURAL
-// ===============================
-app.get('/api/historial/excel', async (req, res) => {
-  const { fechaInicio, fechaFin, tipoProducto, ordenPrecio } = req.query;
-
-  let query = `
-      SELECT 
-          f.IdFactura,
-          pub.NombreProducto AS producto,
-          cat.NombreCategoria AS categoria,
-          f.FechaCompra AS fecha,
-          df.Total AS total,
-          f.MetodoPago AS metodoPago,
-          f.Estado AS estado
+        COALESCE(f.MetodoPago, 'Sin registro') AS metodoPago,
+        CASE
+          WHEN df.Estado = 'Finalizado' THEN 'Finalizado'
+          WHEN df.Estado = 'Cancelado' THEN 'Cancelado'
+          WHEN df.Estado = 'Pendiente' THEN 'Pendiente'
+          ELSE df.Estado
+        END AS estado,
+        f.IdFactura AS idFactura
       FROM DetalleFactura df
-      JOIN Factura f ON f.DetalleFactura = df.IdDetalleFactura
-      JOIN Publicacion pub ON df.Publicacion = pub.IdPublicacion
-      JOIN Categoria cat ON pub.Categoria = cat.IdCategoria
+      LEFT JOIN Factura f ON df.Factura = f.IdFactura
+      INNER JOIN Publicacion pub ON df.Publicacion = pub.IdPublicacion
+      INNER JOIN Categoria c ON pub.Categoria = c.IdCategoria
       WHERE 1 = 1
-  `;
+        AND df.VisibleUsuario = TRUE
+    `;
+
 
   const params = [];
 
+  if (usuarioId) {
+    query += ' AND f.Usuario = ?';
+    params.push(usuarioId);
+  }
   if (fechaInicio) {
     query += ' AND f.FechaCompra >= ?';
     params.push(fechaInicio);
@@ -346,7 +332,138 @@ app.get('/api/historial/excel', async (req, res) => {
     params.push(fechaFin);
   }
   if (tipoProducto) {
-    query += ' AND LOWER(cat.NombreCategoria) = ?';
+    query += ' AND LOWER(c.NombreCategoria) = ?';
+    params.push(tipoProducto.toLowerCase());
+  }
+
+  if (ordenPrecio === 'asc') query += ' ORDER BY df.Total ASC';
+  else if (ordenPrecio === 'desc') query += ' ORDER BY df.Total DESC';
+  else query += ' ORDER BY f.FechaCompra DESC, df.IdDetalleFactura DESC';
+
+  try {
+    const [results] = await pool.query(query, params);
+    res.json(results);
+  } catch (err) {
+    console.error('❌ Error en la consulta de historial:', err);
+    res.status(500).json({ error: 'Error en la consulta de historial' });
+  }
+});
+
+// 🔹 Actualizar estado de DetalleFactura
+app.put('/api/historial/estado/:id', async (req, res) => {
+  const { id } = req.params;
+  const { estado } = req.body;
+
+  try {
+    // 1️⃣ Actualizar DetalleFactura
+    await pool.query(
+      'UPDATE DetalleFactura SET Estado = ? WHERE IdDetalleFactura = ?',
+      [estado, id]
+    );
+
+    // 2️⃣ Actualizar DetalleFacturaComercio correspondiente
+    await pool.query(
+      'UPDATE DetalleFacturaComercio SET Estado = ? WHERE DetFacturacomercio = ?',
+      [estado, id]
+    );
+
+    // 3️⃣ Si se marcó como Finalizado, verificar si toda la factura está finalizada
+    if (estado === 'Finalizado') {
+      const [detalle] = await pool.query(
+        'SELECT Factura FROM DetalleFactura WHERE IdDetalleFactura = ?',
+        [id]
+      );
+
+      if (detalle.length) {
+        const facturaId = detalle[0].Factura;
+
+        const [pendientes] = await pool.query(
+          'SELECT COUNT(*) AS pendientes FROM DetalleFactura WHERE Factura = ? AND Estado != "Finalizado"',
+          [facturaId]
+        );
+
+        if (pendientes[0].pendientes === 0) {
+          await pool.query(
+            'UPDATE Factura SET Estado = ? WHERE IdFactura = ?',
+            ['Pago exitoso', facturaId]
+          );
+        }
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Estado del pedido #${id} actualizado a '${estado}'.`
+    });
+
+  } catch (error) {
+    console.error('❌ Error al actualizar estado:', error);
+    res.status(500).json({ success: false, message: 'Error interno del servidor.' });
+  }
+});
+
+
+//ACTUALIZAR ESTADO VISIBLES
+app.delete('/api/historial/eliminar/:idFactura', async (req, res) => {
+  const { idFactura } = req.params;
+
+  try {
+    await pool.query(`UPDATE DetalleFactura SET VisibleUsuario = FALSE WHERE Factura = ?`, [idFactura]);
+    res.json({ success: true, message: "Registro ocultado correctamente." });
+  } catch (err) {
+    console.error("❌ Error al ocultar registro:", err);
+    res.status(500).json({ success: false, message: "Error al ocultar registro." });
+  }
+});
+
+
+// ===============================
+//  DESCARGAR EXCEL HISTORIAL COMPRAS - USUARIO NATURAL
+// ===============================
+app.get('/api/historial/excel', async (req, res) => {
+  const { fechaInicio, fechaFin, tipoProducto, ordenPrecio, usuarioId } = req.query;
+
+  let query = `
+    SELECT
+      df.IdDetalleFactura AS idDetalleFactura,
+      pub.NombreProducto AS producto,
+      c.NombreCategoria AS categoria,
+      f.FechaCompra AS fecha,
+      df.Total AS total,
+      COALESCE(f.MetodoPago, 'Sin registro') AS metodoPago,
+      CASE
+        WHEN f.Estado = 'Pago exitoso' THEN 'Finalizado'
+        WHEN f.Estado = 'Proceso pendiente' AND df.Estado = 'Pendiente' THEN 'Pendiente'
+        ELSE f.Estado
+      END AS estado,
+      f.IdFactura AS idFactura
+    FROM DetalleFactura df
+    LEFT JOIN Factura f ON df.Factura = f.IdFactura
+    INNER JOIN Publicacion pub ON df.Publicacion = pub.IdPublicacion
+    INNER JOIN Categoria c ON pub.Categoria = c.IdCategoria
+    WHERE 1 = 1
+      AND df.VisibleUsuario = TRUE
+  `;
+
+  const params = [];
+
+  if (usuarioId) {
+    query += ' AND f.Usuario = ?';
+    params.push(usuarioId);
+  }
+
+  if (fechaInicio) {
+    query += ' AND (f.FechaCompra >= ? OR f.FechaCompra IS NULL)';
+    params.push(fechaInicio);
+  }
+
+  if (fechaFin) {
+    query += ' AND (f.FechaCompra <= ? OR f.FechaCompra IS NULL)';
+    params.push(fechaFin);
+  }
+
+  if (tipoProducto) {
+    query += ' AND LOWER(c.NombreCategoria) = ?';
     params.push(tipoProducto.toLowerCase());
   }
 
@@ -366,7 +483,7 @@ app.get('/api/historial/excel', async (req, res) => {
 
     worksheet.columns = [
       { header: '#', key: 'n', width: 5 },
-      { header: 'ID Factura', key: 'IdFactura', width: 10 },
+      { header: 'ID Detalle', key: 'idDetalleFactura', width: 10 },
       { header: 'Producto', key: 'producto', width: 25 },
       { header: 'Categoría', key: 'categoria', width: 20 },
       { header: 'Fecha de Compra', key: 'fecha', width: 20 },
@@ -378,13 +495,13 @@ app.get('/api/historial/excel', async (req, res) => {
     results.forEach((row, i) => {
       worksheet.addRow({
         n: i + 1,
-        IdFactura: row.IdFactura,
-        producto: row.producto,
-        categoria: row.categoria,
-        fecha: row.fecha?.toISOString().split('T')[0],
-        total: Number(row.total),
-        metodoPago: row.metodoPago,
-        estado: row.estado
+        idDetalleFactura: row.idDetalleFactura,
+        producto: row.producto || '—',
+        categoria: row.categoria || '—',
+        fecha: row.fecha ? new Date(row.fecha).toISOString().split('T')[0] : '—',
+        total: Number(row.total || 0),
+        metodoPago: row.metodoPago || '—',
+        estado: row.estado || '—'
       });
     });
 
@@ -395,12 +512,13 @@ app.get('/api/historial/excel', async (req, res) => {
 
     await workbook.xlsx.write(res);
     res.end();
+    console.log(`📦 Excel generado con ${results.length} registros`);
+
   } catch (err) {
     console.error('❌ Error en consulta Excel:', err);
     res.status(500).send('Error al generar Excel');
   }
 });
-
 
 // ==============================
 //  HISTORIAL DE VENTAS - USUARIO COMERCIANTE
@@ -416,20 +534,20 @@ app.get('/api/historial-ventas', async (req, res) => {
   let query = `
     SELECT 
       f.IdFactura AS idVenta,
-      p.NombreProducto AS producto,
+      pub.NombreProducto AS producto,
       c.NombreCategoria AS categoria,
       u.Nombre AS comprador,
       f.FechaCompra AS fecha,
-      df.Cantidad AS cantidad,
       df.Total AS total,
+      df.Cantidad AS cantidad,
       f.MetodoPago AS metodoPago,
-      f.Estado AS estado
+      df.Estado AS estado
     FROM DetalleFactura df
     JOIN Factura f ON df.Factura = f.IdFactura
-    JOIN Producto p ON df.Producto = p.IdProducto
-    JOIN Categoria c ON p.IdCategoria = c.IdCategoria
+    JOIN Publicacion pub ON df.Publicacion = pub.IdPublicacion
+    JOIN Categoria c ON pub.Categoria = c.IdCategoria
     LEFT JOIN Usuario u ON f.Usuario = u.IdUsuario
-    WHERE p.IdComerciante = ?
+    WHERE pub.Comerciante = ?
   `;
 
   const params = [usuario.id];
@@ -451,6 +569,7 @@ app.get('/api/historial-ventas', async (req, res) => {
 
   if (ordenPrecio === 'asc') query += ' ORDER BY df.Total ASC';
   else if (ordenPrecio === 'desc') query += ' ORDER BY df.Total DESC';
+  else query += ' ORDER BY f.FechaCompra DESC, df.IdDetalleFactura DESC';
 
   try {
     const [results] = await pool.query(query, params);
@@ -460,6 +579,7 @@ app.get('/api/historial-ventas', async (req, res) => {
     res.status(500).json({ error: 'Error en la consulta de historial de ventas' });
   }
 });
+
 
 
 // ==============================
@@ -487,7 +607,7 @@ let query = `
     df.Total AS total,
     f.MetodoPago AS metodoPago,
     f.Estado AS estado
-  FROM DetalleFactura df
+  FROM DetalleFacturacomercio df
   JOIN Factura f ON df.Factura = f.IdFactura
   JOIN Producto p ON df.Producto = p.IdProducto
   JOIN Publicacion pub ON pub.IdPublicacion = p.PublicacionComercio
@@ -559,26 +679,70 @@ let query = `
   }
 });
 
+//confirmacion del usuario natural
+app.post("/api/confirmar-recibido", async (req, res) => {
+  const { idDetalle } = req.body;
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
 
+    // Actualizar confirmación del usuario
+    await conn.query(`
+      UPDATE detallefacturacomercio
+      SET ConfirmacionUsuario = 'Recibido'
+      WHERE IdDetalleFacturaComercio = ?
+    `, [idDetalle]);
 
+    // Verificar si ambas confirmaciones están completas
+    const [[detalle]] = await conn.query(`
+      SELECT Factura, ConfirmacionUsuario, ConfirmacionComercio
+      FROM detallefacturacomercio
+      WHERE IdDetalleFacturaComercio = ?
+    `, [idDetalle]);
+
+    if (detalle.ConfirmacionUsuario === 'Recibido' && detalle.ConfirmacionComercio === 'Entregado') {
+      await conn.query(`
+        UPDATE detallefacturacomercio
+        SET Estado = 'Finalizado'
+        WHERE IdDetalleFacturaComercio = ?
+      `, [idDetalle]);
+
+      await conn.query(`
+        UPDATE detallefactura
+        SET Estado = 'Finalizado'
+        WHERE Factura = ?
+      `, [detalle.Factura]);
+    }
+
+    await conn.commit();
+    res.json({ success: true, message: "Confirmación de recibido registrada." });
+  } catch (err) {
+    await conn.rollback();
+    console.error("❌ Error al confirmar recibido:", err);
+    res.status(500).json({ success: false, message: "Error al confirmar recibido." });
+  } finally {
+    conn.release();
+  }
+});
 
 // ----------------------
 // RUTA PARA OBTENER LOS TALLERES 
 // ----------------------
 app.get('/api/talleres', async (req, res) => {
-  const sql = `
-    SELECT
-      P.Nombre AS NombreVendedor,
-      I.NombreComercio,
-      I.Latitud,
-      I.Longitud,
-      I.HoraInicio,
-      I.HoraFin,
-      I.DiasAtencion,
-      P.Barrio
-    FROM informacionVendedor I
-    INNER JOIN Perfil P ON I.InfoVendedor = P.Usuario;
-  `;
+    const [rows] = await pool.query(`
+      SELECT
+        U.Nombre AS NombreVendedor,
+        C.NombreComercio,
+        C.Latitud,
+        C.Longitud,
+        C.HoraInicio,
+        C.HoraFin,
+        C.DiasAtencion,
+        C.Barrio
+      FROM comerciante C
+      INNER JOIN usuario U ON C.Comercio = U.IdUsuario;
+    `);
+
 
   try {
     const [results] = await pool.query(sql);
@@ -867,15 +1031,10 @@ const uploadPublicacion = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5 MB
 });
 
-// ----------------------
-// 🧾 API PARA PUBLICAR
-// ----------------------
 // ===========================
 // 📦 PUBLICAR PRODUCTO
 // ===========================
-// ===========================
-// 📦 PUBLICAR PRODUCTO (con carpeta individual por ID)
-// ===========================
+
 app.post('/api/publicar', uploadPublicacion.array('imagenesProducto', 5), async (req, res) => {
   const usuario = req.session.usuario;
 
@@ -1110,7 +1269,7 @@ app.delete('/api/publicaciones/:id', async (req, res) => {
 });
 
 
-// 🟢 OBTENER UNA PUBLICACIÓN EN ESPECÍFICO POR ID
+// 🟢 OBTENER UNA PUBLICACIÓN EN ESPECÍFICO POR ID - editar publicacion
 app.get('/api/publicaciones/:id', async (req, res) => {
   try {
     const usuario = req.session.usuario;
@@ -1294,83 +1453,6 @@ app.put('/api/publicaciones/:id', uploadEditar.array('imagenesNuevas', 10), asyn
   }
 });
 
-// ----------------------
-// PUBLICACIONES PÚBLICAS (visibles para todos)
-app.get('/api/publicaciones_publicas', async (req, res) => {
-  try {
-    const { categoria, limite } = req.query;
-
-    let query = `
-      SELECT 
-        p.IdPublicacion,
-        p.NombreProducto AS nombreProducto,
-        p.Precio,
-        (SELECT NombreCategoria FROM Categoria WHERE IdCategoria = p.Categoria) AS categoria,
-        p.ImagenProducto
-      FROM Publicacion p
-      WHERE 1
-    `;
-
-    const params = [];
-
-    // 🔹 Filtro opcional por categoría
-    if (categoria && categoria.toLowerCase() !== 'todos') {
-      query += ` AND p.Categoria = (SELECT IdCategoria FROM Categoria WHERE LOWER(NombreCategoria) = LOWER(?))`;
-      params.push(categoria);
-    }
-
-    // 🔹 Ordenar por las más recientes
-    query += ` ORDER BY p.IdPublicacion DESC`;
-
-    // 🔹 Límite opcional
-    if (limite) {
-      query += ` LIMIT ?`;
-      params.push(parseInt(limite));
-    }
-
-    const [rows] = await pool.query(query, params);
-
-    // 🔹 Parsear imágenes y normalizar rutas
-    const publicaciones = rows.map(pub => {
-      let imagenes = [];
-      try {
-        imagenes = JSON.parse(pub.ImagenProducto || '[]');
-
-        // Normalizar rutas: reemplazar backslashes y agregar /image/ si no existe
-        imagenes = imagenes.map(img => {
-          let ruta = img.replace(/\\/g, '/'); // reemplaza "\" por "/"
-          // Quitar prefijo "image/" si ya existe
-          ruta = ruta.replace(/^\/?image\//i, '');
-          // Agregar /image/ al inicio
-          return '/image/' + ruta;
-        });
-
-      } catch {
-        imagenes = [];
-      }
-
-      return {
-        idPublicacion: pub.IdPublicacion,
-        nombreProducto: pub.nombreProducto,
-        precio: pub.Precio,
-        categoria: pub.categoria,
-        imagenes
-      };
-    });
-
-    res.json(publicaciones);
-
-  } catch (error) {
-    console.error('❌ Error al obtener publicaciones públicas:', error);
-    res.status(500).json({ error: 'Error al obtener publicaciones públicas.' });
-  }
-});
-
-
-// ---------------------- 
-// SECCION USUARIO COMERCIANTE 
-// ----------------------
-
 // DASHBOARD USUARIO COMERCIANTE
 // ----------------------
 
@@ -1456,10 +1538,7 @@ app.get('/api/dashboard/comerciante', async (req, res) => {
 });
 
 
-// ---------------------- 
-// EDITAR PERFIL COMERCIANTE
-// ----------------------
-//  ACTUALIZAR PERFIL COMERCIANTE
+//  EDITAR - ACTUALIZAR PERFIL COMERCIANTE
 // ===============================
 app.put(
   "/api/actualizarPerfilComerciante/:idUsuario",
@@ -1612,12 +1691,228 @@ app.get("/api/perfilComerciante/:idUsuario", async (req, res) => {
   }
 });
 
+///APARTADO DE CONTROL DE AGENDA - COMERCIANTE 
+
+app.get('/api/privado/citas', async (req, res) => {
+  const idUsuario = req.session?.usuario?.IdUsuario || 123;
+
+  try {
+    const [comercioRows] = await pool.query(
+      'SELECT NitComercio FROM comerciante WHERE Comercio = ?',
+      [idUsuario]
+    );
+
+    if (comercioRows.length === 0) {
+      return res.status(404).json({ error: 'Comerciante no encontrado' });
+    }
+
+    const nitComercio = comercioRows[0].NitComercio;
+
+    const [citas] = await pool.query(`
+      SELECT 
+        IdSolicitud AS id,
+        CONCAT(ModoServicio, ': ', ComentariosAdicionales) AS title,
+        FechaServicio AS start,
+        ComentariosAdicionales AS descripcion,
+        HoraServicio AS hora
+      FROM controlagendacomercio
+      WHERE Comercio = ?
+    `, [nitComercio]);
+
+    res.json(citas);
+  } catch (error) {
+    console.error('Error al obtener citas:', error);
+    res.status(500).json({ error: 'Error al obtener citas' });
+  }
+});
 
 // ---------------------- 
 // SECCION USUARIO NATURAL 
 // ----------------------
+// Ruta para editar y visualizar los datos del perfil
 
-// Ruta API para detalle de publicación
+app.put("/api/actualizarPerfilNatural/:idUsuario", upload.single("FotoPerfil"), async (req, res) => {
+  const { idUsuario } = req.params;
+  const data = req.body || {};
+  const nuevaFoto = req.file || null;
+
+  try {
+    const [usuarioRows] = await pool.query(
+      "SELECT FotoPerfil FROM Usuario WHERE IdUsuario = ?",
+      [idUsuario]
+    );
+
+    if (usuarioRows.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    let rutaFotoFinal = usuarioRows[0].FotoPerfil;
+
+    if (nuevaFoto) {
+      const tipoFolder = "Natural";
+      const userFolder = path.join(__dirname, "public", "imagen", tipoFolder, idUsuario);
+      fs.mkdirSync(userFolder, { recursive: true });
+
+      if (rutaFotoFinal) {
+        const rutaFotoAnterior = path.join(__dirname, "public", rutaFotoFinal);
+        if (fs.existsSync(rutaFotoAnterior)) {
+          fs.unlinkSync(rutaFotoAnterior);
+        }
+      }
+
+      const nuevoNombreFoto = `${Date.now()}_${Math.round(Math.random() * 1e6)}${path.extname(nuevaFoto.originalname)}`;
+      const rutaDestino = path.join(userFolder, nuevoNombreFoto);
+      fs.renameSync(nuevaFoto.path, rutaDestino);
+
+      rutaFotoFinal = path.join("imagen", tipoFolder, idUsuario, nuevoNombreFoto).replace(/\\/g, "/");
+
+      await pool.query("UPDATE Usuario SET FotoPerfil = ? WHERE IdUsuario = ?", [rutaFotoFinal, idUsuario]);
+    }
+
+    await pool.query(
+      `UPDATE Usuario 
+       SET Nombre = ?, Apellido = ?, Telefono = ?, Correo = ?
+       WHERE IdUsuario = ?`,
+      [
+        data.Nombre || null,
+        data.Apellido || null,
+        data.Telefono || null,
+        data.Correo || null,
+        idUsuario,
+      ]
+    );
+
+    await pool.query(
+      `INSERT INTO perfilnatural (UsuarioNatural, Direccion, Barrio)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE Direccion = VALUES(Direccion), Barrio = VALUES(Barrio)`,
+      [idUsuario, data.Direccion || null, data.Barrio || null]
+    );
+
+    res.json({ mensaje: "✅ Perfil actualizado correctamente", fotoPerfil: rutaFotoFinal });
+  } catch (error) {
+    console.error("❌ Error al actualizar perfil natural:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+
+//visualizacion del perfil 
+
+app.get("/api/perfilNatural/:idUsuario", async (req, res) => {
+  const { idUsuario } = req.params;
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT 
+         u.IdUsuario,
+         u.Nombre,
+         u.Apellido,
+         u.Telefono,
+         u.Correo,
+         u.FotoPerfil,
+         pn.Direccion,
+         pn.Barrio
+       FROM Usuario u
+       LEFT JOIN perfilnatural pn ON u.IdUsuario = pn.UsuarioNatural
+       WHERE u.IdUsuario = ?`,
+      [idUsuario]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error("❌ Error al obtener perfil natural:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+// ----------------------
+// PUBLICACIONES PÚBLICAS (visibles para todos)
+
+app.get('/api/publicaciones_publicas', async (req, res) => {
+  try {
+    const { categoria, limite } = req.query;
+
+    let query = `
+      SELECT 
+        p.IdPublicacion,
+        p.NombreProducto AS nombreProducto,
+        p.Precio,
+        (SELECT NombreCategoria FROM Categoria WHERE IdCategoria = p.Categoria) AS categoria,
+        p.ImagenProducto
+      FROM Publicacion p
+      WHERE 1
+    `;
+
+    const params = [];
+
+    // 🔹 Filtro opcional por categoría
+    if (categoria && categoria.toLowerCase() !== 'todos') {
+      query += ` AND p.Categoria = (SELECT IdCategoria FROM Categoria WHERE LOWER(NombreCategoria) = LOWER(?))`;
+      params.push(categoria);
+    }
+
+    // 🔹 Ordenar por las más recientes
+    query += ` ORDER BY p.IdPublicacion DESC`;
+
+    // 🔹 Límite opcional
+    if (limite) {
+      query += ` LIMIT ?`;
+      params.push(parseInt(limite));
+    }
+
+    const [rows] = await pool.query(query, params);
+
+    // 🔹 Parsear imágenes y normalizar rutas
+    const publicaciones = rows.map(pub => {
+      let imagenes = [];
+      try {
+        imagenes = JSON.parse(pub.ImagenProducto || '[]');
+
+        // Normalizar rutas: reemplazar backslashes y agregar /image/ si no existe
+          imagenes = JSON.parse(pub.ImagenProducto || '[]');
+
+          imagenes = imagenes.map(img => {
+            let ruta = img.replace(/\\/g, '/').trim();
+
+            // ✅ Elimina cualquier prefijo incorrecto como "Natural/"
+            ruta = ruta.replace(/^Natural\//i, '');
+
+            // ✅ Asegura que comience con "/imagen/"
+            if (!ruta.startsWith('imagen/')) {
+              ruta = 'imagen/' + ruta.replace(/^\/?imagen\//i, '');
+            }
+
+            return '/' + ruta;
+          });
+
+
+
+      } catch {
+        imagenes = [];
+      }
+
+      return {
+        idPublicacion: pub.IdPublicacion,
+        nombreProducto: pub.nombreProducto,
+        precio: pub.Precio,
+        categoria: pub.categoria,
+        imagenes
+      };
+    });
+
+    res.json(publicaciones);
+
+  } catch (error) {
+    console.error('❌ Error al obtener publicaciones públicas:', error);
+    res.status(500).json({ error: 'Error al obtener publicaciones públicas.' });
+  }
+});
+
 // ============================
 // Ruta API para detalle de publicación
 // ============================
@@ -1669,16 +1964,31 @@ app.get('/api/detallePublicacion/:id', async (req, res) => {
         );
 
         // Guardar la imagen como string directamente (sin parse)
-        const imagenes = [resultado[0].ImagenProducto.replace(/\\/g, '/')];
+            let imagenes = [];
+            try {
+              imagenes = JSON.parse(resultado[0].ImagenProducto || '[]');
+
+              imagenes = imagenes.map(img => {
+                let ruta = img.replace(/\\/g, '/').trim();
+                ruta = ruta.replace(/^Natural\//i, ''); // elimina prefijo incorrecto
+                if (!ruta.startsWith('imagen/')) {
+                  ruta = 'imagen/' + ruta.replace(/^\/?imagen\//i, '');
+                }
+                return '/' + ruta;
+              });
+            } catch {
+              imagenes = ['/imagen/placeholder.png'];
+            }
 
         // Enviar datos completos
-        res.json({
+          res.json({
             publicacion: {
-                ...resultado[0],
-                ImagenProducto: imagenes
+              ...resultado[0],
+              ImagenProducto: imagenes
             },
             opiniones
-        });
+          });
+
 
     } catch (err) {
         console.error('Error en /api/detallePublicacion/:id', err);
@@ -1859,6 +2169,7 @@ app.get('/api/proceso-compra', async (req, res) => {
       Cantidad: Number(r.Cantidad),
       Precio: Number(r.Precio),
       Subtotal: Number(r.Subtotal),
+      Producto: r.Producto,
       // info del comercio por si la necesitas
       NombreComercio: r.NombreComercio,
       DireccionComercio: r.DireccionComercio,
@@ -1877,7 +2188,6 @@ app.get('/api/proceso-compra', async (req, res) => {
 
 //PROCESO DE COMPRA//
 
-// ✅ FINALIZAR COMPRA
 app.post("/api/finalizar-compra", async (req, res) => {
   const conn = await pool.getConnection();
   try {
@@ -1889,6 +2199,10 @@ app.post("/api/finalizar-compra", async (req, res) => {
 
     if (!usuarioId || !metodoPago) {
       return res.status(400).json({ message: "Faltan datos del usuario o método de pago." });
+    }
+
+    if (!['contraentrega', 'recoger'].includes(metodoPago)) {
+      return res.status(400).json({ message: "Método de pago no válido." });
     }
 
     await conn.beginTransaction();
@@ -1913,77 +2227,75 @@ app.post("/api/finalizar-compra", async (req, res) => {
       return res.status(400).json({ message: "No hay productos pendientes en el carrito." });
     }
 
-    // 2️⃣ Insertar DetalleFactura y ControlAgendaComercio
+    // 2️⃣ Preparar detalles
     let totalCompra = 0;
-    const detalleIds = [];
+    const detallesParaInsertar = [];
 
     for (const item of carritoRows) {
       totalCompra += Number(item.Subtotal);
+      detallesParaInsertar.push({
+        publicacion: item.IdPublicacion,
+        cantidad: item.Cantidad,
+        precioUnitario: item.Precio,
+        total: item.Subtotal,
+        comercio: item.Comercio
+      });
+    }
 
-      // Insertar detalle de factura
-      const [insertDetalle] = await conn.query(
-        `INSERT INTO DetalleFactura (Publicacion, Usuario, Cantidad, PrecioUnitario, Total, Estado)
-         VALUES (?, ?, ?, ?, ?, 'Pendiente')`,
-        [item.IdPublicacion, usuarioId, item.Cantidad, item.Precio, item.Subtotal]
+    // 3️⃣ Insertar factura con estado "Proceso pendiente"
+    const [insertFactura] = await conn.query(
+      `INSERT INTO Factura (Usuario, TotalPago, MetodoPago, Estado, FechaCompra)
+       VALUES (?, ?, ?, ?, NOW())`,
+      [usuarioId, totalCompra, metodoPago, 'Proceso pendiente']
+    );
+
+    const facturaId = insertFactura.insertId;
+
+    // 4️⃣ Insertar detalles con estado "Pendiente"
+    for (const detalle of detallesParaInsertar) {
+      await conn.query(
+        `INSERT INTO DetalleFactura (Factura, Publicacion, Cantidad, PrecioUnitario, Total, Estado)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [facturaId, detalle.publicacion, detalle.cantidad, detalle.precioUnitario, detalle.total, 'Pendiente']
       );
 
-      const detalleId = insertDetalle.insertId;
-      detalleIds.push(detalleId);
+      const [insertDetalleComercio] = await conn.query(
+        `INSERT INTO DetalleFacturaComercio (Factura, Publicacion, Cantidad, PrecioUnitario, Total, Estado)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [facturaId, detalle.publicacion, detalle.cantidad, detalle.precioUnitario, detalle.total, 'Pendiente']
+      );
 
-      // 3️⃣ Insertar en ControlAgendaComercio
-      let modoServicio = "Visita al taller";
-      let tipoServicio = 1;
-      let fecha = null;
-      let hora = null;
-      let comentarios = null;
+      const detalleComercioId = insertDetalleComercio.insertId;
 
-      if (metodoPago === "recoger") {
-        modoServicio = "Visita al taller";
-        tipoServicio = 1;
-        fecha = req.body.fechaRecoger || null;
-        hora = req.body.horaRecoger || null;
-        comentarios = req.body.comentariosRecoger || null;
-      } else {
-        // PSE o contraentrega → se asume "Domicilio"
-        modoServicio = "Domicilio";
-        tipoServicio = 2;
-      }
+      let modoServicio = metodoPago === "recoger" ? "Visita al taller" : "Domicilio";
+      let tipoServicio = metodoPago === "recoger" ? 1 : 2;
+      let fecha = req.body.fechaRecoger || null;
+      let hora = req.body.horaRecoger || null;
+      let comentarios = req.body.comentariosRecoger || null;
 
       await conn.query(
         `INSERT INTO ControlAgendaComercio 
-         (Comercio, DetalleFactura, TipoServicio, ModoServicio, FechaServicio, HoraServicio, ComentariosAdicionales)
+         (Comercio, DetFacturacomercio, TipoServicio, ModoServicio, FechaServicio, HoraServicio, ComentariosAdicionales)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [item.Comercio, detalleId, tipoServicio, modoServicio, fecha, hora, comentarios]
+        [detalle.comercio, detalleComercioId, tipoServicio, modoServicio, fecha, hora, comentarios]
       );
     }
 
-    // 4️⃣ Insertar factura (solo si es PSE)
-    let message = "";
-    let redirect = null;
-
-    if (metodoPago === "pse") {
-      await conn.query(
-        `INSERT INTO Factura (DetalleFactura, Usuario, TotalPago, MetodoPago, Estado)
-         VALUES (?, ?, ?, ?, 'Pago exitoso')`,
-        [detalleIds[0], usuarioId, totalCompra, metodoPago]
-      );
-      message = "Pago exitoso. Redirigiendo a factura...";
-      redirect = "/Natural/Factura_compra.html";
-    }
-
-    if (metodoPago === "contraentrega") {
-      message = "Su proceso se registró con éxito. Puede hacer seguimiento en 'Historial'.";
-    }
-
-    if (metodoPago === "recoger") {
-      message = "Su solicitud fue enviada al comercio con éxito.";
-    }
-
-    // 5️⃣ Vaciar carrito del usuario
+    // 5️⃣ Vaciar carrito
     await conn.query(`DELETE FROM Carrito WHERE UsuarioNat = ?`, [usuarioId]);
 
     await conn.commit();
-    console.log("✅ Compra completada con método:", metodoPago);
+    console.log("✅ Compra registrada con método:", metodoPago);
+
+    // 6️⃣ Mensaje final
+    let message = "";
+    let redirect = null;
+
+    if (metodoPago === "contraentrega") {
+      message = "Su proceso se registró con éxito. Puede hacer seguimiento en 'Historial'.";
+    } else if (metodoPago === "recoger") {
+      message = "Su solicitud fue enviada al comercio con éxito.";
+    }
 
     return res.json({ success: true, message, redirect });
 
@@ -1996,18 +2308,13 @@ app.post("/api/finalizar-compra", async (req, res) => {
   }
 });
 
-
-
-
-
-
 // 🔹 API: Obtener factura por ID - APARTADO DE MOSTRAR FACTURA DESPUES DE COMPRA USUARIO NATURAL
 // ===============================
 app.get('/api/factura/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-    // 1️⃣ Obtener información general de la factura y del usuario
+    // 1️⃣ Obtener datos de la factura y del comprador
     const [facturaRows] = await pool.query(`
       SELECT 
         f.IdFactura,
@@ -2017,11 +2324,10 @@ app.get('/api/factura/:id', async (req, res) => {
         f.Estado,
         u.Nombre AS NombreUsuario,
         u.Apellido AS ApellidoUsuario,
-        u.Correo,
         u.Telefono,
-        u.FotoPerfil
+        u.Correo
       FROM Factura f
-      JOIN Usuario u ON f.Usuario = u.IdUsuario
+      LEFT JOIN Usuario u ON f.Usuario = u.IdUsuario
       WHERE f.IdFactura = ?
     `, [id]);
 
@@ -2031,35 +2337,19 @@ app.get('/api/factura/:id', async (req, res) => {
 
     const factura = facturaRows[0];
 
-    // 2️⃣ Obtener el IdDetalleFactura vinculado
-    const [detalleFactura] = await pool.query(`
-      SELECT IdDetalleFactura 
-      FROM DetalleFactura 
-      WHERE IdDetalleFactura = (
-        SELECT DetalleFactura FROM Factura WHERE IdFactura = ?
-      )
-    `, [id]);
-
-    if (detalleFactura.length === 0) {
-      return res.status(404).json({ msg: 'No hay detalles asociados a esta factura' });
-    }
-
-    const detalleId = detalleFactura[0].IdDetalleFactura;
-
-    // 3️⃣ Consultar los productos del detalle
+    // 2️⃣ Obtener los productos asociados a la factura
     const [detalleRows] = await pool.query(`
       SELECT 
-        p.Nombre AS NombreProducto,
-        p.ImagenProducto,
-        df.Cantidad,
-        df.PrecioUnitario,
-        df.Total
+      p.NombreProducto,
+      df.Cantidad,
+      df.PrecioUnitario,
+      df.Total
       FROM DetalleFactura df
-      JOIN Producto p ON df.Producto = p.IdProducto
-      WHERE df.IdDetalleFactura = ?
-    `, [detalleId]);
+      JOIN Publicacion p ON df.Publicacion = p.IdPublicacion
+      WHERE df.Factura = ?
+    `, [id]);
 
-    // 4️⃣ Responder con toda la información
+    // 3️⃣ Enviar la respuesta
     res.json({
       factura,
       detalles: detalleRows
@@ -2068,5 +2358,834 @@ app.get('/api/factura/:id', async (req, res) => {
   } catch (error) {
     console.error('❌ Error al obtener factura:', error);
     res.status(500).json({ msg: 'Error al obtener factura' });
+  }
+});
+
+//------------------//
+//SECCION GENERAL //
+//------------------//
+
+//APARTADO DE CENTRO DE AYUDA
+
+app.post("/api/centro-ayuda", async (req, res) => {
+  const { perfil, tipoSolicitud, rol, asunto, descripcion } = req.body;
+
+  // Validación de sesión
+  if (!perfil || typeof perfil !== "number") {
+    return res.status(401).json({ error: "Debes iniciar sesión para hacer esta solicitud." });
+  }
+
+  // Validación de rol
+  const rolesValidos = ["Usuario Natural", "Comerciante", "PrestadorServicio"];
+  if (!rolesValidos.includes(rol)) {
+    return res.status(400).json({ error: "Rol inválido. Selecciona una opción válida." });
+  }
+
+  try {
+    const sql = `
+      INSERT INTO centroayuda (Perfil, TipoSolicitud, Rol, Asunto, Descripcion)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+    const [result] = await pool.execute(sql, [perfil, tipoSolicitud, rol, asunto, descripcion]);
+
+    res.status(200).json({ message: "Solicitud registrada con éxito." });
+  } catch (error) {
+    console.error("Error al insertar solicitud:", error);
+    res.status(500).json({ error: "Error al guardar la solicitud." });
+  }
+});
+
+
+
+//----------///
+// SECCION DE PRESTADOR DE SERVICIOS//
+//-----------//
+// ===============================
+//  Perfil del Prestador de Servicios
+app.get('/api/perfil-prestador', async (req, res) => {
+  const usuarioSesion = req.session.usuario;
+  if (!usuarioSesion || usuarioSesion.tipo !== "PrestadorServicio") {
+    return res.status(401).json({ error: "No autorizado. Debes iniciar sesión como prestador de servicios." });
+  }
+
+  try {
+    // 🔍 Datos del usuario
+    const [userRows] = await pool.query(
+      `SELECT u.IdUsuario, u.Nombre, u.Documento, u.FotoPerfil
+       FROM Usuario u
+       WHERE u.IdUsuario = ?`,
+      [usuarioSesion.id]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const user = userRows[0];
+
+    // 🖼️ Ruta de imagen
+    let tipoCarpeta = usuarioSesion.tipo;
+    if (tipoCarpeta === "PrestadorServicio") {
+      tipoCarpeta = "PrestadorServicios"; // ✅ Corrección de nombre de carpeta
+    }
+
+    const rutaCarpeta = path.join(__dirname, 'public', 'Imagen', tipoCarpeta, user.Documento.toString());
+    let fotoRutaFinal = '/image/imagen_perfil.png'; // por defecto
+
+    if (fs.existsSync(rutaCarpeta)) {
+      const archivos = fs.readdirSync(rutaCarpeta);
+      const archivoFoto = archivos.find(
+        f => f.includes(user.FotoPerfil) || f.match(/\.(jpg|jpeg|png|webp)$/i)
+      );
+      if (archivoFoto) {
+        fotoRutaFinal = `/Imagen/${tipoCarpeta}/${user.Documento}/${archivoFoto}`;
+      }
+    } else {
+      console.warn(`⚠️ Carpeta de usuario no encontrada: ${rutaCarpeta}`);
+    }
+
+    // 📊 Estadísticas reales
+    const [statsRows] = await pool.query(
+      `SELECT 
+         COUNT(*) AS total,
+         SUM(CASE WHEN Estado = 'Pendiente' THEN 1 ELSE 0 END) AS pendientes,
+         SUM(CASE WHEN Estado = 'Finalizado' THEN 1 ELSE 0 END) AS completados,
+         AVG(Valoracion) AS valoracion
+       FROM Solicitudes
+       WHERE Prestador = ?`,
+      [usuarioSesion.id]
+    );
+
+    const stats = statsRows[0] || {
+      pendientes: 0,
+      completados: 0,
+      valoracion: 0
+    };
+
+    // 📋 Últimas solicitudes
+    const [solicitudesRows] = await pool.query(
+      `SELECT IdSolicitud, Cliente, Origen, Destino, Fecha, Estado
+       FROM Solicitudes
+       WHERE Prestador = ?
+       ORDER BY Fecha DESC
+       LIMIT 5`,
+      [usuarioSesion.id]
+    );
+
+    // ✅ Respuesta
+    res.json({
+      nombre: user.Nombre,
+      foto: fotoRutaFinal,
+      descripcion: "Prestador de servicio de grúa 24/7",
+      estadisticas: {
+        pendientes: stats.pendientes || 0,
+        completados: stats.completados || 0,
+        valoracion: stats.valoracion ? parseFloat(stats.valoracion).toFixed(1) : "N/A"
+      },
+      solicitudes: solicitudesRows
+    });
+
+  } catch (err) {
+    console.error("❌ Error en perfil del prestador:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+// ===============================
+//  PUBLICACIONES GRUAS
+
+// 📦 Configuración específica para publicaciones de grúa
+const storagePublicacionPrestador = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const usuario = req.session.usuario;
+    const dir = path.join(__dirname, 'public', 'Publicaciones', usuario.id.toString());
+
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const nombreUnico = Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(file.originalname);
+    cb(null, nombreUnico);
+  }
+});
+
+const uploadPublicacionPrestador = multer({
+  storage: storagePublicacionPrestador,
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
+
+
+
+app.post('/api/publicar-grua', uploadPublicacionPrestador.array('imagenesGrua', 5), async (req, res) => {
+  const usuario = req.session.usuario;
+
+  // 🔒 Validación de acceso
+  if (!usuario || usuario.tipo !== 'PrestadorServicio') {
+    cleanupTempFiles(req.files, tempDirGrua);
+    return res.status(403).json({ error: 'Acceso no autorizado. Solo prestadores pueden publicar.' });
+  }
+
+  const { titulo, descripcion, tarifa, zona } = req.body;
+
+  // 🧩 Validar campos
+  if (!titulo || !descripcion || !tarifa || !zona) {
+    cleanupTempFiles(req.files, tempDirGrua);
+    return res.status(400).json({ error: 'Faltan datos obligatorios.' });
+  }
+
+  try {
+    // 🔹 Obtener ID del servicio del prestador
+    const [rowsServicio] = await pool.query(
+      'SELECT IdServicio FROM prestadorservicio WHERE Usuario = ? LIMIT 1',
+      [usuario.id]
+    );
+
+    if (rowsServicio.length === 0) {
+      cleanupTempFiles(req.files, tempDirGrua);
+      return res.status(404).json({ error: 'No se encontró el servicio asociado al usuario.' });
+    }
+
+    const idServicio = rowsServicio[0].IdServicio;
+
+    // 🔹 Insertar publicación sin imágenes aún
+    const [resultPub] = await pool.query(
+      `INSERT INTO publicaciongrua (Servicio, TituloPublicacion, DescripcionServicio, TarifaBase, ZonaCobertura, FotoPublicacion)
+       VALUES (?, ?, ?, ?, ?, '')`,
+      [idServicio, titulo, descripcion, tarifa, zona]
+    );
+
+    const idPublicacion = resultPub.insertId;
+    console.log('✅ Publicación de grúa creada con ID:', idPublicacion);
+
+    // 🔹 Crear carpeta de la publicación
+    const carpetaPublicacion = path.join(
+      process.cwd(),
+      'public', 'imagen', 'PrestadorServicios', usuario.id.toString(), 'publicaciones', idPublicacion.toString()
+    );
+    fs.mkdirSync(carpetaPublicacion, { recursive: true });
+
+    // 🔹 Mover imágenes desde temp a carpeta específica
+    const imagenes = [];
+
+    if (Array.isArray(req.files) && req.files.length > 0) {
+      req.files.forEach(file => {
+        const destino = path.join(carpetaPublicacion, file.filename);
+        fs.renameSync(file.path, destino);
+
+        const rutaRelativa = path.posix.join(
+          'imagen',
+          'PrestadorServicios',
+          usuario.id.toString(),
+          'publicaciones',
+          idPublicacion.toString(),
+          file.filename
+        );
+
+        imagenes.push(rutaRelativa);
+      });
+    }
+
+    // ✅ Guardar todas las rutas como JSON en FotoPublicacion
+    const imagenFinal = imagenes.length > 0
+      ? JSON.stringify(imagenes)
+      : JSON.stringify(['/imagen/default_grua.jpg']);
+
+    await pool.query(
+      'UPDATE publicaciongrua SET FotoPublicacion = ? WHERE IdPublicacionGrua = ?',
+      [imagenFinal, idPublicacion]
+    );
+
+    res.json({ mensaje: '✅ Publicación de grúa creada exitosamente', idPublicacion });
+
+  } catch (err) {
+    console.error('❌ Error en /api/publicar-grua:', err);
+    cleanupTempFiles(req.files, tempDirGrua);
+    res.status(500).json({ error: 'Error al registrar la publicación.' });
+  }
+});
+
+/// REGISTRO O HISTORIAL DE PUBLICACIONES GRUAS//
+
+app.get('/api/publicaciones-grua', async (req, res) => {
+  try {
+    const usuario = req.session.usuario;
+
+    if (!usuario || usuario.tipo !== 'PrestadorServicio') {
+      return res.status(403).json({ error: 'Acceso no autorizado. Solo prestadores pueden ver sus publicaciones.' });
+    }
+
+    const [servicio] = await pool.query(
+      'SELECT IdServicio FROM prestadorservicio WHERE Usuario = ? LIMIT 1',
+      [usuario.id]
+    );
+
+    if (!servicio || servicio.length === 0) {
+      return res.status(404).json({ error: 'No se encontró el servicio asociado.' });
+    }
+
+    const idServicio = servicio[0].IdServicio;
+
+    const [publicaciones] = await pool.query(
+      `SELECT 
+         IdPublicacionGrua, 
+         TituloPublicacion, 
+         DescripcionServicio, 
+         TarifaBase, 
+         ZonaCobertura, 
+         FotoPublicacion
+       FROM publicaciongrua
+       WHERE Servicio = ?
+       ORDER BY IdPublicacionGrua DESC`,
+      [idServicio]
+    );
+
+    res.json(publicaciones);
+  } catch (err) {
+    console.error('❌ Error al obtener publicaciones de grúa:', err);
+    res.status(500).json({ error: 'Error interno al obtener las publicaciones.' });
+  }
+});
+
+//ELIMINAR UNA PUBLICACION DE GRUA
+
+app.delete('/api/publicaciones-grua/:id', async (req, res) => {
+  try {
+    const usuario = req.session.usuario;
+    const idPublicacion = req.params.id;
+
+    if (!usuario || usuario.tipo !== 'PrestadorServicio') {
+      return res.status(403).json({ error: 'Acceso no autorizado. Solo prestadores pueden eliminar publicaciones.' });
+    }
+
+    // 🔹 1️⃣ Obtener el ID del servicio del prestador
+    const [servicio] = await pool.query(
+      'SELECT IdServicio FROM prestadorservicio WHERE Usuario = ? LIMIT 1',
+      [usuario.id]
+    );
+
+    if (!servicio || servicio.length === 0) {
+      return res.status(404).json({ error: 'No se encontró el servicio asociado.' });
+    }
+
+    const idServicio = servicio[0].IdServicio;
+
+    // 🔹 2️⃣ Verificar que la publicación exista y obtener las imágenes
+    const [publicacion] = await pool.query(
+      'SELECT FotoPublicacion FROM publicaciongrua WHERE IdPublicacionGrua = ? AND Servicio = ?',
+      [idPublicacion, idServicio]
+    );
+
+    if (!publicacion || publicacion.length === 0) {
+      return res.status(404).json({ error: 'No se encontró la publicación o no pertenece a tu servicio.' });
+    }
+
+    let imagenes = [];
+    try {
+      imagenes = JSON.parse(publicacion[0].FotoPublicacion || '[]');
+    } catch (parseErr) {
+      console.warn('⚠️ No se pudieron parsear las imágenes:', parseErr);
+    }
+
+    // 🔹 3️⃣ Eliminar la publicación
+    await pool.query(
+      'DELETE FROM publicaciongrua WHERE IdPublicacionGrua = ? AND Servicio = ?',
+      [idPublicacion, idServicio]
+    );
+
+    // 🔹 4️⃣ Eliminar carpeta completa de la publicación
+    const carpetaPublicacion = path.join(
+      __dirname,
+      'public',
+      'imagen',
+      'PrestadorServicios',
+      usuario.id.toString(),
+      'publicaciones',
+      idPublicacion.toString()
+    );
+
+    try {
+      if (fs.existsSync(carpetaPublicacion)) {
+        fs.rmSync(carpetaPublicacion, { recursive: true, force: true });
+        console.log(`🗑️ Carpeta eliminada correctamente: ${carpetaPublicacion}`);
+      } else {
+        console.warn('⚠️ Carpeta no encontrada (posiblemente ya eliminada):', carpetaPublicacion);
+      }
+    } catch (fsErr) {
+      console.error('❌ Error al eliminar carpeta:', fsErr);
+    }
+
+    // 🔹 5️⃣ Confirmar eliminación
+    res.json({
+      mensaje: '✅ Publicación y carpeta eliminadas exitosamente.'
+    });
+
+  } catch (err) {
+    console.error('❌ Error al eliminar publicación de grúa:', err);
+    res.status(500).json({ error: 'Error interno al eliminar la publicación.' });
+  }
+});
+
+
+
+//APARTADO DE EDITAR PUBLICACION GRUA
+app.get('/api/publicaciones-grua/:id', async (req, res) => {
+  console.log("📥 Solicitud recibida para editar publicación");
+  console.log("🔐 Usuario en sesión:", req.session.usuario);
+  console.log("🔍 ID solicitado:", req.params.id);
+
+  try {
+    const usuario = req.session.usuario;
+    const idPublicacion = req.params.id;
+
+    if (!usuario || usuario.tipo !== 'PrestadorServicio') {
+      return res.status(403).json({ error: 'Acceso no autorizado.' });
+    }
+
+    const [servicioRows] = await pool.query(
+      'SELECT IdServicio FROM prestadorservicio WHERE Usuario = ? LIMIT 1',
+      [usuario.id]
+    );
+
+    if (servicioRows.length === 0) {
+      return res.status(404).json({ error: 'No se encontró el servicio asociado.' });
+    }
+
+    const idServicio = servicioRows[0].IdServicio;
+
+    const [publicacionRows] = await pool.query(
+      `SELECT 
+        pg.IdPublicacionGrua,
+        pg.TituloPublicacion,
+        pg.DescripcionServicio,
+        pg.TarifaBase,
+        pg.ZonaCobertura,
+        pg.FotoPublicacion
+      FROM publicaciongrua pg
+      WHERE pg.IdPublicacionGrua = ? AND pg.Servicio = ?
+      LIMIT 1`,
+      [idPublicacion, idServicio]
+    );
+
+    if (publicacionRows.length === 0) {
+      return res.status(404).json({ error: 'Publicación no encontrada o no pertenece al prestador.' });
+    }
+
+    const pub = publicacionRows[0];
+    try {
+      pub.FotoPublicacion = JSON.parse(pub.FotoPublicacion || '[]');
+    } catch {
+      pub.FotoPublicacion = [];
+    }
+
+    res.json(pub);
+  } catch (err) {
+    console.error('❌ Error al obtener publicación de grúa:', err);
+    res.status(500).json({ error: 'Error interno al obtener la publicación.' });
+  }
+});
+
+///MODIFICAR Y/O ACTUALIZAR PUBLICACION
+
+app.put('/api/publicaciones-grua/:id', uploadPublicacionPrestador.array('imagenesNuevas', 5), async (req, res) => {
+  const usuario = req.session.usuario;
+  const idPublicacion = req.params.id;
+
+  if (!usuario || usuario.tipo !== 'PrestadorServicio') {
+    cleanupTempFiles(req.files, tempDirGrua);
+    return res.status(403).json({ error: 'Acceso no autorizado.' });
+  }
+
+  const { titulo, descripcion, tarifa, zona } = req.body;
+
+  if (!titulo || !descripcion || !tarifa || !zona) {
+    cleanupTempFiles(req.files, tempDirGrua);
+    return res.status(400).json({ error: 'Faltan datos obligatorios.' });
+  }
+
+  try {
+    const [servicioRows] = await pool.query(
+      'SELECT IdServicio FROM prestadorservicio WHERE Usuario = ? LIMIT 1',
+      [usuario.id]
+    );
+
+    if (servicioRows.length === 0) {
+      cleanupTempFiles(req.files, tempDirGrua);
+      return res.status(404).json({ error: 'No se encontró el servicio asociado.' });
+    }
+
+    const idServicio = servicioRows[0].IdServicio;
+
+    const [verificacion] = await pool.query(
+      'SELECT IdPublicacionGrua FROM publicaciongrua WHERE IdPublicacionGrua = ? AND Servicio = ?',
+      [idPublicacion, idServicio]
+    );
+
+    if (verificacion.length === 0) {
+      cleanupTempFiles(req.files, tempDirGrua);
+      return res.status(404).json({ error: 'Publicación no encontrada o no pertenece al prestador.' });
+    }
+
+    await pool.query(
+      `UPDATE publicaciongrua 
+       SET TituloPublicacion = ?, DescripcionServicio = ?, TarifaBase = ?, ZonaCobertura = ?
+       WHERE IdPublicacionGrua = ?`,
+      [titulo, descripcion, tarifa, zona, idPublicacion]
+    );
+
+    const carpetaPublicacion = path.join(
+      process.cwd(),
+      'public', 'imagen', 'PrestadorServicios', usuario.id.toString(), 'publicaciones', idPublicacion.toString()
+    );
+    fs.mkdirSync(carpetaPublicacion, { recursive: true });
+
+    const nuevasImagenes = [];
+
+    if (Array.isArray(req.files) && req.files.length > 0) {
+      // Eliminar imágenes anteriores
+      fs.readdirSync(carpetaPublicacion).forEach(file => {
+        fs.unlinkSync(path.join(carpetaPublicacion, file));
+      });
+
+      req.files.forEach(file => {
+        const destino = path.join(carpetaPublicacion, file.filename);
+        fs.renameSync(file.path, destino);
+
+        const rutaRelativa = path.posix.join(
+          'imagen',
+          'PrestadorServicios',
+          usuario.id.toString(),
+          'publicaciones',
+          idPublicacion.toString(),
+          file.filename
+        );
+
+        nuevasImagenes.push(rutaRelativa);
+      });
+
+      await pool.query(
+        'UPDATE publicaciongrua SET FotoPublicacion = ? WHERE IdPublicacionGrua = ?',
+        [JSON.stringify(nuevasImagenes), idPublicacion]
+      );
+    }
+
+    res.json({ mensaje: '✅ Publicación actualizada correctamente' });
+
+  } catch (err) {
+    console.error('❌ Error al actualizar publicación:', err);
+    cleanupTempFiles(req.files, tempDirGrua);
+    res.status(500).json({ error: 'Error interno al actualizar la publicación.' });
+  }
+});
+
+/// EDITAR PERFIL PRESTADOR //
+
+
+app.get("/api/perfilPrestador/:idUsuario", async (req, res) => {
+  const { idUsuario } = req.params;
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT Nombre, Correo, Telefono, FotoPerfil FROM Usuario WHERE IdUsuario = ?`,
+      [idUsuario]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error("❌ Error al obtener perfil prestador:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+//ACTUALIZAR PERFIL PRESTADOR //
+
+app.put("/api/actualizarPerfilPrestador/:idUsuario", uploadPublicacionPrestador.fields([
+  { name: "FotoPerfil", maxCount: 1 },
+  { name: "Certificado", maxCount: 1 }
+]), async (req, res) => {
+  const { idUsuario } = req.params;
+  const data = req.body || {};
+  const foto = req.files?.FotoPerfil?.[0] || null;
+  const certificado = req.files?.Certificado?.[0] || null;
+
+  try {
+    const [usuarioRows] = await pool.query(
+      "SELECT FotoPerfil FROM Usuario WHERE IdUsuario = ?",
+      [idUsuario]
+    );
+
+    if (usuarioRows.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    let rutaFotoFinal = usuarioRows[0].FotoPerfil;
+    let rutaCertificadoFinal = usuarioRows[0].CertificadoGrua;
+
+    // ✅ Procesar imagen de perfil
+    if (foto) {
+      const folder = path.join(__dirname, "public", "imagen", "PrestadorServicios", idUsuario);
+      fs.mkdirSync(folder, { recursive: true });
+
+      if (rutaFotoFinal) {
+        const rutaAnterior = path.join(__dirname, "public", rutaFotoFinal);
+        if (fs.existsSync(rutaAnterior)) fs.unlinkSync(rutaAnterior);
+      }
+
+      const nombreFoto = `${Date.now()}_${Math.round(Math.random() * 1e6)}${path.extname(foto.originalname)}`;
+      const destino = path.join(folder, nombreFoto);
+      fs.renameSync(foto.path, destino);
+
+      rutaFotoFinal = path.join("imagen", "PrestadorServicios", idUsuario, nombreFoto).replace(/\\/g, "/");
+    }
+    // ✅ Procesar certificado
+    if (certificado) {
+      const folder = path.join(__dirname, "public", "Imagen", "PrestadorServicios", idUsuario, "documentos");
+      fs.mkdirSync(folder, { recursive: true });
+
+      // Obtener ruta anterior desde prestadorservicio
+      const [servicioRows] = await pool.query(
+        "SELECT IdServicio, Certificado FROM prestadorservicio WHERE Usuario = ? LIMIT 1",
+        [idUsuario]
+      );
+
+      if (servicioRows.length === 0) {
+        return res.status(404).json({ error: "No se encontró el servicio asociado al usuario." });
+      }
+
+      const idServicio = servicioRows[0].IdServicio;
+      const rutaCertificadoAnterior = servicioRows[0].Certificado;
+
+      if (rutaCertificadoAnterior) {
+        const rutaCompleta = path.join(__dirname, "public", rutaCertificadoAnterior);
+        if (fs.existsSync(rutaCompleta)) fs.unlinkSync(rutaCompleta);
+      }
+
+      const nombreCertificado = `${Date.now()}_${Math.round(Math.random() * 1e6)}${path.extname(certificado.originalname)}`;
+      const destino = path.join(folder, nombreCertificado);
+      fs.renameSync(certificado.path, destino);
+
+      const rutaCertificadoFinal = path.join("Imagen", "PrestadorServicios", idUsuario, "documentos", nombreCertificado).replace(/\\/g, "/");
+
+      await pool.query(
+        "UPDATE prestadorservicio SET Certificado = ? WHERE IdServicio = ?",
+        [rutaCertificadoFinal, idServicio]
+      );
+    }
+
+    // ✅ Actualizar datos en la base
+    await pool.query(
+      `UPDATE Usuario 
+      SET Nombre = ?, Correo = ?, Telefono = ?, FotoPerfil = ?
+      WHERE IdUsuario = ?`,
+      [
+        data.Nombre || null,
+        data.Correo || null,
+        data.Telefono || null,
+        rutaFotoFinal,
+        idUsuario
+      ]
+    );
+
+
+
+    res.json({ mensaje: "✅ Perfil actualizado correctamente", fotoPerfil: rutaFotoFinal, certificado: rutaCertificadoFinal });
+
+  } catch (error) {
+    console.error("❌ Error al actualizar perfil prestador:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+//HISTORIAL DE SERVICIOS -  PRESTADOR//
+
+app.get("/api/historial-servicios/:idPrestador", async (req, res) => {
+  const { idPrestador } = req.params;
+
+  try {
+    const [servicioRows] = await pool.query(
+      "SELECT IdServicio FROM prestadorservicio WHERE Usuario = ? LIMIT 1",
+      [idPrestador]
+    );
+
+    if (servicioRows.length === 0) {
+      return res.status(404).json({ error: "Prestador no encontrado" });
+    }
+
+    const idServicio = servicioRows[0].IdServicio;
+
+    const [historial] = await pool.query(
+      `SELECT 
+         hs.IdHistorial,
+         u.Nombre AS Cliente,
+         pg.TituloPublicacion AS Servicio,
+         CONCAT(cas.DireccionRecogida, IF(cas.Destino IS NOT NULL, CONCAT(' → ', cas.Destino), '')) AS Ubicacion,
+         cas.FechaServicio AS Fecha,
+         cas.Estado,
+         pg.TarifaBase AS Total
+       FROM historialservicios hs
+       JOIN controlagendaservicios cas ON hs.SolicitudServicio = cas.IdSolicitudServicio
+       JOIN publicaciongrua pg ON cas.PublicacionGrua = pg.IdPublicacionGrua
+       JOIN usuario u ON cas.UsuarioNatural = u.IdUsuario
+       WHERE pg.Servicio = ?
+       ORDER BY cas.FechaServicio DESC`,
+      [idServicio]
+    );
+
+    res.json(historial);
+  } catch (err) {
+    console.error("❌ Error al obtener historial de servicios:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+//AGENDA DE SERVICIOS/SOLICITUDES - USUARIO PRESTADOR//
+app.get("/api/solicitudes-grua/:idPrestador", async (req, res) => {
+  const { idPrestador } = req.params;
+
+  try {
+    const [servicioRows] = await pool.query(
+      "SELECT IdServicio FROM prestadorservicio WHERE Usuario = ? LIMIT 1",
+      [idPrestador]
+    );
+
+    if (servicioRows.length === 0) {
+      return res.status(404).json({ error: "Prestador no encontrado" });
+    }
+
+    const idServicio = servicioRows[0].IdServicio;
+
+    const [solicitudes] = await pool.query(
+      `SELECT 
+         cas.IdSolicitudServicio,
+         u.Nombre AS Cliente,
+         pg.TituloPublicacion AS Servicio,
+         cas.DireccionRecogida,
+         cas.Destino,
+         cas.FechaServicio,
+         cas.Estado
+       FROM controlagendaservicios cas
+       JOIN publicaciongrua pg ON cas.PublicacionGrua = pg.IdPublicacionGrua
+       JOIN usuario u ON cas.UsuarioNatural = u.IdUsuario
+       WHERE pg.Servicio = ?
+       ORDER BY cas.FechaServicio DESC`,
+      [idServicio]
+    );
+
+    res.json(solicitudes);
+  } catch (err) {
+    console.error("❌ Error al obtener solicitudes:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+//MARKETPLACE DE GRUAS - SOLO VISUALIZACION DE USUARIO NATURAL//
+
+app.get("/api/marketplace-gruas", async (req, res) => {
+  try {
+    const [publicaciones] = await pool.query(
+      `SELECT 
+         pg.IdPublicacionGrua,
+         pg.TituloPublicacion,
+         pg.DescripcionServicio,
+         pg.ZonaCobertura,
+         pg.FotoPublicacion,
+         ps.Usuario
+       FROM publicaciongrua pg
+       JOIN prestadorservicio ps ON pg.Servicio = ps.IdServicio
+       ORDER BY pg.IdPublicacionGrua DESC`
+    );
+
+    res.json(publicaciones);
+  } catch (err) {
+    console.error("❌ Error al obtener publicaciones:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+///DETALLE O VISUALIZACION DE EL DETALLE DE LA PUBLICACION DE GRUAS/// 
+app.get("/api/publicaciones-grua/:id", async (req, res) => {
+  const { id } = req.params;
+  console.log("📥 Solicitud recibida con ID:", id);
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT 
+         pg.IdPublicacionGrua,
+         pg.TituloPublicacion,
+         pg.DescripcionServicio,
+         pg.ZonaCobertura,
+         pg.TarifaBase,
+         pg.FotoPublicacion,
+         u.Nombre AS NombrePrestador,
+         u.Telefono,
+         u.Correo
+       FROM publicaciongrua pg
+       JOIN prestadorservicio ps ON pg.Servicio = ps.IdServicio
+       JOIN usuario u ON ps.Usuario = u.IdUsuario
+       WHERE pg.IdPublicacionGrua = ?`,
+      [id]
+    );
+
+    console.log("📊 Resultado de la consulta:", rows);
+
+    if (rows.length === 0) {
+      console.warn("⚠️ No se encontró publicación para el ID:", id);
+      return res.status(404).json({ error: "Publicación no encontrada" });
+    }
+
+    res.json(rows[0]);
+  } catch (err) {
+    console.error("❌ Error al obtener publicación:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+
+//opiniones grua //
+app.post('/api/opiniones-grua', async (req, res) => {
+  try {
+    const { usuarioId, idPublicacionGrua, nombreUsuario, comentario, calificacion } = req.body;
+
+    if (!usuarioId || !idPublicacionGrua || !comentario || !calificacion) {
+      return res.status(400).json({ error: 'Faltan datos obligatorios' });
+    }
+
+    const [resultado] = await pool.query(
+      `INSERT INTO OpinionesGrua (UsuarioNatural, PublicacionGrua, NombreUsuario, Comentario, Calificacion)
+       VALUES (?, ?, ?, ?, ?)`,
+      [usuarioId, idPublicacionGrua, nombreUsuario, comentario, calificacion]
+    );
+
+    res.json({
+      mensaje: '✅ Opinión guardada correctamente',
+      idOpinion: resultado.insertId
+    });
+  } catch (error) {
+    console.error('❌ Error al insertar opinión de grúa:', error);
+    res.status(500).json({ error: 'Error en el servidor al guardar la opinión.' });
+  }
+});
+
+app.get('/api/opiniones-grua/:idPublicacionGrua', async (req, res) => {
+  const { idPublicacionGrua } = req.params;
+
+  try {
+    const [opiniones] = await pool.query(
+      `SELECT NombreUsuario, Comentario, Calificacion, Fecha
+       FROM OpinionesGrua
+       WHERE PublicacionGrua = ?
+       ORDER BY Fecha DESC`,
+      [idPublicacionGrua]
+    );
+
+    res.json(opiniones);
+  } catch (error) {
+    console.error('❌ Error al obtener opiniones de grúa:', error);
+    res.status(500).json({ error: 'Error en el servidor al consultar opiniones.' });
   }
 });

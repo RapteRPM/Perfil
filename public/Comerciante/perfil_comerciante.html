@@ -51,12 +51,21 @@
         <h1 class="text-xl font-bold tracking-wide">Perfil</h1>
       </div>
       <div class="hidden md:flex items-center space-x-6">
-        <a href="publicar.html" class="hover:text-gray-200 transition">Publicar</a>
-        <a href="Control_agenda.html" class="hover:text-gray-200 transition">Control de agenda</a>
-        <a href="historial_ventas.html" class="hover:text-gray-200 transition">Historial de ventas</a>
-        <a href="registro_publicacion.html" class="hover:text-gray-200 transition">Historial de publicaciones</a>
-        <a href="../General/CentroAyuda.html" class="hover:text-gray-200 transition">Centro de ayuda</a>
+      <a href="../General/index.html" class="hover:text-gray-200 transition">RPM Market</a>
+      <a href="publicar.html" class="hover:text-gray-200 transition">Publicar</a>
+      <div class="dropdown">
+        <button class="btn btn-outline-light dropdown-toggle" type="button" id="controlesDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          Controles
+        </button>
+        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="controlesDropdown">
+          <li><a class="dropdown-item" href="Control_agenda.html">Control de agenda</a></li>
+          <li><a class="dropdown-item" href="historial_ventas.html">Historial de ventas</a></li>
+          <li><a class="dropdown-item" href="registro_publicacion.html">Historial de publicaciones</a></li>
+        </ul>
       </div>
+      <a href="../General/CentroAyuda.html" class="hover:text-gray-200 transition">Centro de ayuda</a>
+    </div>
+
       <button class="md:hidden text-white"><i class="fas fa-bars text-xl"></i></button>
     </div>
   </nav>

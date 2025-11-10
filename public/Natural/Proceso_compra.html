@@ -92,39 +92,10 @@
     </div>
   </section>
 
-  <!-- 👤 Datos del comprador -->
-  <section class="mb-5">
-    <h3 class="fw-bold text-center mb-4 text-primary">Datos del comprador</h3>
-    <form id="form-comprador" class="row g-3 bg-white p-4 rounded shadow-sm">
-      <div class="col-md-6">
-        <label class="form-label">Nombre completo</label>
-        <input type="text" class="form-control" id="nombreComprador" placeholder="Ej: Sebastián Duarte" required>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Correo electrónico</label>
-        <input type="email" class="form-control" id="correoComprador" placeholder="ejemplo@email.com" required>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Teléfono</label>
-        <input type="tel" class="form-control" id="telefonoComprador" required>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Dirección</label>
-        <input type="text" class="form-control" id="direccionComprador" required>
-      </div>
-    </form>
-  </section>
-
   <!-- 💳 Método de pago -->
   <section class="mb-5">
     <h3 class="fw-bold text-center mb-4 text-primary">Método de pago</h3>
     <div class="list-group shadow-sm" id="metodosPago">
-
-      <!-- ✅ Opción PSE -->
-      <label class="list-group-item">
-        <input class="form-check-input me-2" type="radio" name="metodoPago" value="pse" required>
-        Transferencia (PSE)
-      </label>
 
       <!-- ✅ Opción Contraentrega -->
       <label class="list-group-item">
@@ -145,9 +116,10 @@
 
         <label class="form-label">Hora de recogida:</label>
         <input type="time" class="form-control" id="horaRecoger">
+
         <label class="form-label">Observaciones (opcional):</label>
         <textarea id="comentariosRecoger" class="form-control mb-3" rows="3" placeholder="Ej: Llego una sola persona, llamar al timbre, etc."></textarea>
-        <!-- ✅ Aquí se rellenará dinámicamente -->
+
         <div class="alert alert-info mt-3" id="infoComercio">
           <strong>Comercio:</strong> <span id="nombreComercio">No especificado</span><br>
           <small>Dirección: <span id="direccionComercio">No especificada</span></small>

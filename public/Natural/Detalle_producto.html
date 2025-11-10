@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <style>
       .map-container {
     border-radius: 15px;
@@ -74,7 +76,7 @@
   <div class="row g-4">
     <!-- Imagen del producto / Carrusel dinámico -->
     <div class="col-md-6 text-center">
-      <img src="image/placeholder.png" alt="Producto" class="product-img shadow">
+      <img src="/imagen/placeholder.png" alt="Imagen por defecto" class="product-img">
     </div>
 
     <!-- Información del producto + mapa -->
@@ -92,7 +94,7 @@
       <!-- Botones -->
       <div class="botones-accion mb-4">
         <button class="btn btn-primary btn-lg px-4 me-2">Añadir al carrito</button>
-        <button class="btn btn-outline-success btn-lg px-4">Comprar ahora</button>
+        <button id="btn-comprar-ahora" class="btn btn-outline-success btn-lg px-4">Comprar ahora</button>
       </div>
 
       <!-- 📍 Mapa dentro del detalle -->
@@ -167,9 +169,10 @@
     </div>
   </div>
 </footer>
-  <script src="../JS/mapa.js"></script>
+  <script></script>
   <script src="../JS/perfil_usuario.js"></script>
   <script src="../JS/UsuarioSesion.js"></script>
   <script src="../JS/Natural/detallePublicacion.js"></script>
+  <script src="../JS/mapa.js"></script>
 </body>
 </html>

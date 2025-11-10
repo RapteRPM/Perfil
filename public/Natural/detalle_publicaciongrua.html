@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
   <link rel="stylesheet" href="style.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 </head>
 <body>
 <!-- HEADER -->
@@ -46,10 +49,10 @@
       </div>
 
       <div class="hidden md:flex items-center space-x-6">
-        <a href="../index.html" class="hover:text-gray-200 transition">Inicio</a>
+        <a href="..//General/marketplace_gruas.html" class="hover:text-gray-200 transition">Market Grua</a>
         <a href="perfil_usuario.html" class="hover:text-gray-200 transition"> Perfil</a>
         <a href="carrito_compras.html" class="hover:text-gray-200 transition"> Carrito</a>
-        <a href="../CentroAyuda.html" class="hover:text-gray-200 transition"> Centro de ayuda</a>
+        <a href="../General/CentroAyuda.html" class="hover:text-gray-200 transition"> Centro de ayuda</a>
       </div>
     </div>
   </nav>
@@ -60,40 +63,34 @@
   <div class="row g-4">
     <!-- Imagen -->
     <div class="col-md-6 text-center">
-      <img src="../image/Casco 1.png" alt="Grúa de servicio" class="img-fluid rounded shadow-lg border" />
+      <img src="" alt="Grúa de servicio" class="img-fluid rounded shadow-lg border" />
     </div>
 
     <!-- Información del servicio -->
     <div class="col-md-6">
       <div class="card p-4 shadow-sm border-0">
         <h3 class="fw-bold text-primary mb-3">
-          <i class="fas fa-truck-pickup me-2 text-danger"></i>Servicio de Grúa 24/7
+          <i class="fas fa-truck-pickup me-2 text-danger"></i><span id="tituloPublicacion">Servicio de Grúa</span>
         </h3>
-        <p class="text-secondary mb-4">
-          Traslado de vehículos livianos y pesados en Bogotá y alrededores.
-        </p>
+        <p class="text-secondary mb-4" id="descripcionServicio"></p>
 
         <ul class="list-group mb-4">
-          <li class="list-group-item"><strong>Prestador:</strong> Gruas Express Bogotá</li>
-          <li class="list-group-item"><strong>Teléfono:</strong> +57 310 456 7890</li>
-          <li class="list-group-item"><strong>Correo:</strong> contacto@gruasexpress.com</li>
-          <li class="list-group-item"><strong>Descripción:</strong> Traslado y asistencia en carretera 24/7. Atención para vehículos livianos y pesados.</li>
-          <li class="list-group-item"><strong>Área de cobertura:</strong> Bogotá y Cundinamarca</li>
-          <li class="list-group-item"><strong>Tarifa base (COP):</strong> $80.000</li>
+          <li class="list-group-item"><strong>Prestador:</strong> <span id="nombrePrestador"></span></li>
+          <li class="list-group-item"><strong>Teléfono:</strong> <span id="telefonoPrestador"></span></li>
+          <li class="list-group-item"><strong>Correo:</strong> <span id="correoPrestador"></span></li>
+          <li class="list-group-item"><strong>Descripción:</strong> <span id="detalleServicio"></span></li>
+          <li class="list-group-item"><strong>Área de cobertura:</strong> <span id="zonaCobertura"></span></li>
+          <li class="list-group-item"><strong>Tarifa base (COP):</strong> <span id="tarifaBase"></span></li>
         </ul>
 
         <!-- Calificación general -->
         <div class="mb-4">
           <h5 class="text-warning fw-bold mb-1">Calificación general del servicio</h5>
           <div class="d-flex align-items-center">
-            <div class="star-rating text-warning fs-5 me-2">
-              <i class="bi bi-star-fill"></i>
-              <i class="bi bi-star-fill"></i>
-              <i class="bi bi-star-fill"></i>
-              <i class="bi bi-star-half"></i>
-              <i class="bi bi-star"></i>
+            <div class="star-rating text-warning fs-5 me-2" id="calificacionPromedio">
+              <!-- Estrellas dinámicas -->
             </div>
-            <span class="text-muted">(4.3 de 5 - basado en 24 opiniones)</span>
+            <span class="text-muted" id="resumenOpiniones"></span>
           </div>
         </div>
 
@@ -101,10 +98,6 @@
         <div class="d-flex gap-3">
           <button class="btn btn-primary w-50" data-bs-toggle="modal" data-bs-target="#modalAgendar">
             <i class="fas fa-calendar-plus"></i> Agendar
-          </button>
-          <a href="tel:+573104567890" class="btn btn-success w-50">
-            <i class="fas fa-phone-alt"></i> Llamar
-          </a>
         </div>
       </div>
     </div>
@@ -114,45 +107,20 @@
   <section class="mt-5">
     <h4 class="fw-bold mb-4 text-dark">Opiniones de otros usuarios</h4>
 
-    <!-- Opinión 1 -->
-    <div class="card p-3 mb-3 shadow-sm border-start border-4 border-success">
-      <strong>Camilo Rodríguez</strong>
-      <div class="star-rating text-warning mb-1">
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star"></i>
-      </div>
-      <p class="mb-1">Muy buen servicio, el operador fue amable y llegó rápido.</p>
-      <small class="text-muted">Publicado el 25 de septiembre de 2025</small>
-    </div>
-
-    <!-- Opinión 2 -->
-    <div class="card p-3 mb-3 shadow-sm border-start border-4 border-primary">
-      <strong>Laura Gómez</strong>
-      <div class="star-rating text-warning mb-1">
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star-half"></i>
-        <i class="bi bi-star"></i>
-      </div>
-      <p class="mb-1">La grúa llegó puntual y el servicio fue excelente. Recomendado.</p>
-      <small class="text-muted">Publicado el 30 de septiembre de 2025</small>
-    </div>
+    <!-- Contenedor dinámico de opiniones -->
+    <div id="opinionesContainer"></div>
 
     <!-- Formulario para dejar opinión -->
     <div class="card p-4 shadow-sm mt-4 border-0">
       <h5 class="fw-bold mb-3 text-dark">Deja tu opinión</h5>
-      <form>
+      <form id="form-comentario">
         <div class="mb-3">
           <label for="comentario" class="form-label">Comentario</label>
           <textarea id="comentario" class="form-control" rows="3" placeholder="Escribe tu experiencia..." required></textarea>
         </div>
         <div class="mb-3">
-          <label class="form-label">Calificación</label>
-          <select class="form-select w-auto" required>
+          <label for="calificacion" class="form-label">Calificación</label>
+          <select id="calificacion" class="form-select w-auto" required>
             <option value="">Selecciona</option>
             <option value="5">⭐⭐⭐⭐⭐ (5)</option>
             <option value="4">⭐⭐⭐⭐ (4)</option>
@@ -168,8 +136,6 @@
     </div>
   </section>
 </main>
-
-
 <!-- MODAL AGENDAR -->
 <div class="modal fade" id="modalAgendar" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -237,33 +203,10 @@
 </footer>
 
 <!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
-<script>
-  // Inicializar mapa
-  const map = L.map('map').setView([4.711, -74.072], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
-  L.marker([4.711, -74.072]).addTo(map).bindPopup("Servicio de Grúa Express Bogotá").openPopup();
 
-  // Manejo del formulario
-  document.getElementById("formAgendar").addEventListener("submit", function(e) {
-    e.preventDefault();
-    const fecha = document.getElementById("fecha").value;
-    const hora = document.getElementById("hora").value;
-    const direccion = document.getElementById("direccion").value;
-    const detalle = document.getElementById("detalle").value;
-
-    alert(`✅ Servicio agendado:\n📅 ${fecha} ${hora}\n📍 ${direccion}\n📝 ${detalle}`);
-    const modal = bootstrap.Modal.getInstance(document.getElementById("modalAgendar"));
-    modal.hide();
-    this.reset();
-  });
-</script>
 <script src="../JS/perfil_usuario.js"></script>
 <script src="../JS/UsuarioSesion.js"></script>
+<script src="../JS/Natural/DetallePublicacionGrua.js"></script>
 </body>
 </html>

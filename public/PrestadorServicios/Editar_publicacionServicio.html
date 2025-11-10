@@ -56,8 +56,8 @@
     <div class="flex items-center space-x-8 mt-3 md:mt-0">
       <a href="perfil_servicios.html" class="hover:text-gray-200 transition">Inicio</a>
       <a href="publicar_grua.html" class="hover:text-gray-200 transition">Publicar</a>
-      <a href="historia_servicios.html" class="hover:text-gray-200 transition">Historial</a>
-      <a href="../CentroAyuda.html" class="hover:text-gray-200 transition">Centro de ayuda</a>
+      <a href="historia_servicios.html" class="hover:text-gray-200 transition">Mis servicios</a>
+      <a href="../General/CentroAyuda.html" class="hover:text-gray-200 transition">Centro de ayuda</a>
     </div>
   </div>
 </nav>
@@ -99,26 +99,15 @@
         <!-- Imagen: upload + preview + remove -->
         <div class="col-12">
           <label class="form-label">Imagen / Logo</label>
-          <input id="serviceImage" class="form-control" type="file" accept="image/*">
+          <input id="serviceImage" class="form-control" type="file" accept="image/*" multiple>
           <div id="previewArea">
             <!-- preview appended here by JS -->
           </div>
         </div>
 
-        <!-- Opcionales: disponibilidad, contact -->
-        <div class="col-md-6">
-          <label for="contactPhone" class="form-label">Teléfono de contacto</label>
-          <input id="contactPhone" class="form-control" type="tel" value="+57 310 456 7890" />
-        </div>
-
-        <div class="col-md-6">
-          <label for="contactEmail" class="form-label">Correo de contacto</label>
-          <input id="contactEmail" class="form-control" type="email" value="contacto@gruasexpress.com" />
-        </div>
-
         <!-- Actions -->
         <div class="col-12 text-center mt-3">
-          <a href="historia_servicios.html" class="btn btn-outline-light me-3">Cancelar</a>
+          <a href="Registro_servicios.html" class="btn btn-outline-light me-3">Cancelar</a>
           <button type="submit" class="btn btn-primary">Guardar cambios</button>
         </div>
       </form>
@@ -153,71 +142,8 @@
       </div>
     </div>
   </footer>
-
-  <!-- Scripts: preview + remove + form submit -->
-  <script>
-    const fileInput = document.getElementById('serviceImage');
-    const previewArea = document.getElementById('previewArea');
-
-    function clearPreview() {
-      previewArea.innerHTML = '';
-      // clear input value (works cross-browser)
-      fileInput.value = '';
-    }
-
-    fileInput.addEventListener('change', (e) => {
-      previewArea.innerHTML = '';
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-
-      // limit simple check (optional)
-      // if (file.size > 5 * 1024 * 1024) { alert('Imagen demasiado grande (max 5MB).'); fileInput.value=''; return; }
-
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        const wrapper = document.createElement('div');
-        wrapper.id = 'previewContainer';
-
-        const img = document.createElement('img');
-        img.src = ev.target.result;
-        img.alt = 'Vista previa';
-
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.id = 'removePreviewBtn';
-        btn.title = 'Eliminar imagen';
-        btn.innerHTML = '✖';
-        btn.addEventListener('click', () => {
-          clearPreview();
-        });
-
-        wrapper.appendChild(img);
-        wrapper.appendChild(btn);
-        previewArea.appendChild(wrapper);
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // submit handler (mock)
-    document.getElementById('editServiceForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      // gather values (here you would send to server)
-      const data = {
-        title: document.getElementById('serviceTitle').value,
-        price: document.getElementById('basePrice').value,
-        area: document.getElementById('coverageArea').value,
-        desc: document.getElementById('serviceDesc').value,
-        phone: document.getElementById('contactPhone').value,
-        email: document.getElementById('contactEmail').value,
-        hasImage: !!(fileInput.files && fileInput.files[0])
-      };
-      // For now show confirmation
-      alert('✅ Publicación actualizada correctamente:\n' + data.title);
-      // optionally: redirect to history or keep on same page
-      // window.location.href = 'historia_servicios.html';
-    });
-  </script>
   <script src="../JS/perfil_usuario.js"></script>
   <script src="../JS/UsuarioSesion.js"></script>
+  <script src="../JS/Prestador/EditarPublicacionServicio.js"></script>
 </body>
 </html>

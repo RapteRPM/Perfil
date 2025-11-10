@@ -1,32 +1,8 @@
-// DISEÑO, ESTILO Y FUNCIONAMIENTO DE LA AGENDA COMERCIANTE
-
-// Eventos simulados (puedes reemplazarlos más adelante con los de la BD)
-const eventosSimulados = [
-  {
-    id: '1',
-    title: 'Entrega: Kit de frenos',
-    start: '2025-09-30',
-    descripcion: 'Cliente solicita entrega de kit de frenos en taller principal.',
-  },
-  {
-    id: '2',
-    title: 'Taller: Revisión general',
-    start: '2025-10-02',
-    descripcion: 'Cita en taller para revisión completa de vehículo.',
-  },
-  {
-    id: '3',
-    title: 'Domicilio: Cambio de batería',
-    start: '2025-10-04',
-    descripcion: 'Cliente solicita mecánico a domicilio para cambio de batería.',
-  },
-];
-
 let calendar;
+let eventos = [];
 let eventoActual;
 
-document.addEventListener('DOMContentLoaded', function () {
-  // Inicializar calendario con colores adaptados al tema RPM
+document.addEventListener('DOMContentLoaded', async function () {
   calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
     initialView: 'dayGridMonth',
     locale: 'es',
@@ -35,12 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
       center: 'title',
       right: 'dayGridMonth,timeGridWeek',
     },
-    events: eventosSimulados.map(evento => ({
-      ...evento,
-      backgroundColor: 'rgb(236, 11, 11)', // naranja RPM
-      borderColor: 'rgb(236, 11, 11)',
-      textColor: '#fff',
-    })),
+    events: [],
     eventClick: function (info) {
       resaltarEvento(info.event);
       mostrarModal(info.event);
@@ -48,16 +19,37 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   calendar.render();
-
-  // Cargar lista lateral
-  cargarListaCitas();
+  await cargarEventosDesdeServidor();
 });
 
-// Cargar lista lateral de citas
+async function cargarEventosDesdeServidor() {
+  try {
+    const res = await fetch('/api/privado/citas');
+    const data = await res.json();
+
+    if (!Array.isArray(data)) {
+      throw new Error('Respuesta inesperada del servidor');
+    }
+
+    eventos = data;
+    calendar.removeAllEvents();
+    calendar.addEventSource(eventos.map(evento => ({
+      ...evento,
+      backgroundColor: 'rgb(236, 11, 11)',
+      borderColor: 'rgb(236, 11, 11)',
+      textColor: '#fff',
+    })));
+
+    cargarListaCitas();
+  } catch (error) {
+    console.error('Error al cargar eventos:', error);
+  }
+}
+
 function cargarListaCitas() {
   const lista = document.getElementById('lista-citas');
   lista.innerHTML = '';
-  eventosSimulados.forEach(evento => {
+  eventos.forEach(evento => {
     const item = document.createElement('div');
     item.className = 'cita-item';
     item.style.backgroundColor = '#2c2c2c';
@@ -76,7 +68,6 @@ function cargarListaCitas() {
   });
 }
 
-// Resalta el evento seleccionado en el calendario
 function resaltarEvento(evento) {
   calendar.getEvents().forEach(e => {
     e.setProp('backgroundColor', 'rgb(236, 11, 11)');
@@ -86,30 +77,27 @@ function resaltarEvento(evento) {
   evento.setProp('borderColor', '#00aa77');
 }
 
-// Muestra modal con la información de la cita
 function mostrarModal(evento) {
   eventoActual = evento;
   document.getElementById('modal-title').innerText = evento.title;
   document.getElementById('modal-desc').innerText = evento.extendedProps.descripcion;
   document.getElementById('modal-date').innerText = evento.startStr;
+  document.getElementById('modal-time').innerText = evento.extendedProps.hora || 'No definida';
   document.getElementById('overlay').style.display = 'block';
   document.getElementById('modal').style.display = 'block';
 }
 
-// Cierra el modal
 function cerrarModal() {
   document.getElementById('overlay').style.display = 'none';
   document.getElementById('modal').style.display = 'none';
   document.getElementById('nuevaFecha').value = '';
 }
 
-// Aceptar fecha
 function aceptarFecha() {
   mostrarAlerta("✅ Fecha aceptada para: " + eventoActual.title, "success");
   cerrarModal();
 }
 
-// Proponer nueva fecha
 function proponerFecha() {
   const nueva = document.getElementById('nuevaFecha').value;
   if (nueva) {
@@ -121,7 +109,6 @@ function proponerFecha() {
   }
 }
 
-// Función de alerta moderna
 function mostrarAlerta(mensaje, tipo) {
   const alertBox = document.createElement('div');
   alertBox.className = `alert alert-${tipo} position-fixed bottom-0 end-0 m-4 shadow`;

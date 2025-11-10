@@ -76,6 +76,7 @@
     <h5>Datos del Comprador</h5>
     <p><strong>Nombre:</strong> <span id="nombreComprador">Juan Pérez</span></p>
     <p><strong>Correo:</strong> <span id="correoComprador">juanperez@example.com</span></p>
+    <p><strong>Dirección:</strong> <span id="telefonoComprador">3014038181</span></p>
     <p><strong>Dirección:</strong> <span id="direccionComprador">Calle Falsa 123, Bogotá</span></p>
   </div>
 
@@ -89,6 +90,8 @@
 
   <div class="mt-4">
     <h5>Productos Comprados</h5>
+  <div class="mt-4">
+    <h5>Productos Comprados</h5>
     <table class="table table-striped text-center align-middle mt-3">
       <thead class="table-light">
         <tr>
@@ -99,22 +102,13 @@
         </tr>
       </thead>
       <tbody id="productosFactura">
-        <tr>
-          <td><img src="../image/producto1.jpg" class="product-img me-2" style="width:40px;"> Repuesto Motor X</td>
-          <td>2</td>
-          <td>$150.000</td>
-          <td>$300.000</td>
-        </tr>
-        <tr>
-          <td><img src="../image/producto2.jpg" class="product-img me-2" style="width:40px;"> Aceite Premium</td>
-          <td>1</td>
-          <td>$80.000</td>
-          <td>$80.000</td>
-        </tr>
+        <!-- Los productos se insertarán aquí dinámicamente -->
       </tbody>
     </table>
 
-    <p class="fw-bold text-end mt-3">Total Pagado: <span id="totalPagado" class="text-primary">$380.000</span></p>
+    <p class="fw-bold text-end mt-3">
+      Total Pagado: <span id="totalPagado" class="text-primary"></span>
+    </p>
   </div>
 
   <div class="text-center mt-4">

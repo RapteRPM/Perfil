@@ -405,3 +405,29 @@ thead {
     border: 1px solid #334155;
 }
 
+
+
+
+
+
+
+    .form-container {
+      background-color: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 25px rgba(255, 255, 255, 0.08);
+      max-width: 850px;
+      margin: auto;
+    }
+
+
+
+    .form-control {
+      background-color: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+    }
+
+
+

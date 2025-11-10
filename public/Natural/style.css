@@ -402,6 +402,8 @@ textarea:focus {
 #carouselProducto img,
 .product-img {
     width: 100%;          /* Ocupa todo el ancho del contenedor */
-    height: 400px;        /* Altura fija para todas las imágenes */
+    height: 750px;        /* Altura fija para todas las imágenes */
     object-fit: cover;    /* Recorta proporcionalmente sin deformar */
-}
+    border-radius: 3%;
+  }
+

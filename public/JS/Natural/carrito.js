@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const fila = document.createElement('tr');
       fila.innerHTML = `
         <td>${producto.NombreProducto}</td>
-        <td>$${producto.Precio.toLocaleString()}</td>
+        <td>$${Number(producto.Precio || 0).toLocaleString('es-CO')}</td>
         <td>
           <input 
             type="number" 

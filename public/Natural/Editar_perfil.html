@@ -40,7 +40,7 @@
         <div class="hidden md:flex items-center space-x-6">
           <a href="perfil_usuario.html" class="hover:text-gray-200 transition">Inicio</a>
           <a href="carrito_compras.html" class="hover:text-gray-200 transition">Carrito</a>
-          <a href="../CentroAyuda.html" class="hover:text-gray-200 transition">Centro de ayuda</a>
+          <a href="../General/CentroAyuda.html" class="hover:text-gray-200 transition">Centro de ayuda</a>
         </div>
         <!-- Móvil -->
         <button class="md:hidden text-white"><i class="fas fa-bars text-xl"></i></button>
@@ -57,12 +57,13 @@
   <!-- Bloque del usuario -->
   <div class="relative flex flex-col items-center w-full">
     <!-- Imagen del usuario -->
-    <img 
-      id="foto-usuario" 
-      src="../image/imagen_perfil.png" 
-      alt="Usuario" 
-      class="w-28 h-28 object-cover rounded-full border-4 border-red-600 shadow-md transition-transform duration-300 hover:scale-105"
-    />
+      <img 
+        id="foto-usuario" 
+        src="/imagen/imagen_perfil.png" 
+        alt="Usuario" 
+        class="w-28 h-28 object-cover rounded-full border-4 border-red-600 shadow-md transition-transform duration-300 hover:scale-105"
+      />
+
 
       <!-- Nombre del usuario -->
       <span id="nombre-usuario" class="font-semibold text-xl text-gray-800 mt-3 block">Cargando...</span>
@@ -116,33 +117,33 @@
     <!-- Columna principal -->
     <section class="md:col-span-2 bg-white rounded-xl shadow-lg p-6">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Información Personal</h2>
-      <form class="space-y-4">
+      <form id="perfilForm" class="space-y-4">
         <div>
           <label class="block text-gray-700 font-medium">Nombre completo</label>
-          <input type="text" value="Juan Pérez" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"/>
+          <input type="text" id="nombreCompleto"  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"/>
         </div>
         <div>
           <label class="block text-gray-700 font-medium">Direccion</label>
-          <input type="dir" value="Cra 12 # 139 - 45" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"/>
+          <input type="dir" id="direccion"  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"/>
         </div>
         <div>
           <label class="block text-gray-700 font-medium">Barrio</label>
-          <input type="bar" value="Santa Rita" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"/>
+          <input type="bar" id="barrio"  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"/>
         </div>
         <div>
           <label class="block text-gray-700 font-medium">Correo electrónico</label>
-          <input type="email" value="juanperez@email.com" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"/>
+          <input type="email" id="correo"  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"/>
         </div>
         <div>
           <label class="block text-gray-700 font-medium">Teléfono</label>
-          <input type="tel" value="3014038181" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"/>
+          <input type="tel" id="telefono" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"/>
         </div>
         <div>
             <label class="block text-gray-700 font-medium">Actualizar imagen de perfil</label>
-            <input type="file" class="form-control" id="imagen" accept="image/*">
+            <input type="file" id="imagen" class="form-control" id="imagen" accept="image/*">
             <div class="preview-container d-none" id="previewContainer">
-                <img id="previewImg" class="preview-img" />
-                <button type="button" class="remove-btn" id="removeImg">&times;</button>
+              <img id="previewImg" class="preview-img" />
+              <button type="button" class="remove-btn" id="removeImg">&times;</button>
             </div>
         </div>
         <div class="flex justify-end">
@@ -183,5 +184,6 @@
 </footer>
 <script src="../JS/perfil_usuario.js"></script>
 <script src="../JS/UsuarioSesion.js"></script>
+<script src="../JS/Natural/editar_perfil.js"></script>
 </body>
 </html>

@@ -21,24 +21,13 @@
         <input type="text" id="cedula" name="cedula" placeholder="Ingrese su cédula" required>
       </div>
 
-      <button type="submit" class="btn-enviar">Enviar código</button>
+      <button type="submit" class="btn-enviar">Recuperar contraseña</button>
     </form>
 
     <a href="ingreso.html" class="volver">← Volver al ingreso</a>
   </div>
-  <script>
-  const form = document.querySelector("form");
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const cedula = document.getElementById("cedula").value.trim();
-    if (!/^\d+$/.test(cedula)) {
-      alert("Ingrese un número de cédula válido");
-      return;
-    }
-    alert("Se ha enviado un código a su correo registrado");
-    form.reset();
-  });
-</script>
+<script src="../JS/RecuperarContraseña.js"></script>
+
 
 </body>
 </html>

@@ -31,20 +31,8 @@
 
     <a href="ingreso.html" class="volver">← Volver al ingreso</a>
   </div>
-  <script>
-  const form = document.querySelector("form");
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const nueva = document.getElementById("nuevaContrasena").value;
-    const confirmar = document.getElementById("confirmarContrasena").value;
-    if(nueva !== confirmar){
-      alert("Las contraseñas no coinciden");
-      return;
-    }
-    alert("Contraseña actualizada con éxito");
-    form.reset();
-  });
-</script>
+<script src="../JS/cambiarcontraseña.js"></script>
+
 
 </body>
 </html>

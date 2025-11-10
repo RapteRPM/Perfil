@@ -1,17 +1,19 @@
-// eliminar/evitar cualquier línea que use "data" antes de definirla
-// localStorage.setItem("usuarioId", data.idUsuario); // <-- BORRAR
-
 const form = document.getElementById("perfilForm");
+const imagenPerfil = document.getElementById("imagenPerfil");
+const previewContainer = document.getElementById("previewContainer");
+const previewImg = document.getElementById("previewImg");
+const removeBtn = document.getElementById("removeImg");
 
 document.addEventListener("DOMContentLoaded", async () => {
-  try {
-    const usuarioId = localStorage.getItem("usuarioId");
-    if (!usuarioId) {
-      console.warn("⚠️ No hay usuario en sesión");
-      return;
-    }
+  const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+  if (!usuarioActivo || usuarioActivo.tipo !== "Comerciante") {
+    console.warn("⚠️ Usuario no válido o no es Comerciante");
+    return;
+  }
+  const usuarioId = usuarioActivo.id;
 
-    // ✅ Hacer fetch solo para llenar el formulario
+  // ✅ Cargar datos del perfil
+  try {
     const res = await fetch(`/api/perfilComerciante/${usuarioId}`);
     if (!res.ok) {
       console.error("Fetch perfil falló:", res.status, res.statusText);
@@ -26,7 +28,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     console.log("✅ Perfil del comerciante:", data);
 
-    // 🧩 Llenar el formulario con los datos correctos
     document.getElementById("Nombre").value = data.Nombre || "";
     document.getElementById("Apellido").value = data.Apellido || "";
     document.getElementById("NombreComercio").value = data.NombreComercio || "";
@@ -40,61 +41,57 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("HoraFin").value = data.HoraFin || "";
     document.getElementById("RedesSociales").value = data.RedesSociales || "";
 
-    const previewImg = document.getElementById("previewImg");
     if (data.FotoPerfil && previewImg) {
       previewImg.src = `/${data.FotoPerfil}`;
-      document.getElementById("previewContainer").classList.remove("hidden");
+      previewContainer.classList.remove("hidden");
     }
-
   } catch (err) {
     console.error("❌ Error cargando el perfil:", err);
   }
-});
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const usuarioId = localStorage.getItem("usuarioId");
-  if (!usuarioId) return alert("No hay usuario logueado");
+  // ✅ Enviar formulario para actualizar perfil
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  const formData = new FormData(form);
-  try {
-    const res = await fetch(`/api/actualizarPerfilComerciante/${usuarioId}`, {
-      method: "PUT",
-      body: formData,
-    });
+    const formData = new FormData(form); // ✅ incluye automáticamente FotoPerfil si el input tiene name="FotoPerfil"
 
-    const data = await res.json();
-    if (!res.ok) {
-      alert("❌ " + (data.error || "Error al actualizar"));
-      return;
+    try {
+      const res = await fetch(`/api/actualizarPerfilComerciante/${usuarioId}`, {
+        method: "PUT",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert("❌ " + (data.error || "Error al actualizar"));
+        return;
+      }
+
+      alert(data.mensaje || "Perfil actualizado correctamente ✅");
+
+      if (data.fotoPerfil) {
+        previewImg.src = `/${data.fotoPerfil}`;
+        imagenPerfil.value = "";
+        previewContainer.classList.add("hidden");
+      }
+    } catch (err) {
+      console.error("❌ Error al enviar formulario:", err);
+      alert("Error de conexión");
     }
+  });
 
-    alert(data.mensaje || "Perfil actualizado correctamente ✅");
+  // ✅ Vista previa de imagen
+  imagenPerfil.addEventListener("change", () => {
+    const file = imagenPerfil.files[0];
+    if (file) {
+      previewImg.src = URL.createObjectURL(file);
+      previewContainer.classList.remove("hidden");
+    }
+  });
 
-  } catch (err) {
-    console.error("❌ Error al enviar formulario:", err);
-    alert("Error de conexión");
-  }
-});
-
-
-const imagenPerfil = document.getElementById("imagenPerfil");
-const previewContainer = document.getElementById("previewContainer");
-const previewImg = document.getElementById("previewImg");
-const removeBtn = document.getElementById("removeImg");
-
-// Cuando selecciona una nueva imagen
-imagenPerfil.addEventListener("change", () => {
-  const file = imagenPerfil.files[0];
-  if (file) {
-    previewImg.src = URL.createObjectURL(file);
-    previewContainer.classList.remove("hidden");
-  }
-});
-
-// Botón X para eliminar la foto seleccionada
-removeBtn.addEventListener("click", () => {
-  imagenPerfil.value = "";        // Quitar la selección
-  previewImg.src = "";             // Quitar preview
-  previewContainer.classList.add("hidden");  // Ocultar contenedor
+  removeBtn.addEventListener("click", () => {
+    imagenPerfil.value = "";
+    previewImg.src = "";
+    previewContainer.classList.add("hidden");
+  });
 });

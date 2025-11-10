@@ -1,4 +1,3 @@
-// public/JS/procesoCompra.js
 document.addEventListener("DOMContentLoaded", async () => {
   const tabla = document.getElementById("tabla-productos");
   const totalGeneral = document.getElementById("total-general");
@@ -9,11 +8,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Mostrar/ocultar campos adicionales para recoger en comercio
   document.querySelectorAll("input[name='metodoPago']").forEach(radio => {
     radio.addEventListener("change", () => {
-      if (radio.value === "recoger" && radio.checked) {
-        campoRecoger.classList.remove("d-none");
-      } else {
-        campoRecoger.classList.add("d-none");
-      }
+      campoRecoger.classList.toggle("d-none", !(radio.value === "recoger" && radio.checked));
     });
   });
 
@@ -75,15 +70,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const metodoPago = document.querySelector("input[name='metodoPago']:checked")?.value;
     if (!metodoPago) return alert("Selecciona un método de pago.");
 
-    // Obtiene el usuario desde localStorage o sesión
     const usuarioId = localStorage.getItem("usuarioId") || null;
 
     const datos = {
       usuarioId,
-      nombre: document.getElementById("nombreComprador").value.trim(),
-      correo: document.getElementById("correoComprador").value.trim(),
-      telefono: document.getElementById("telefonoComprador").value.trim(),
-      direccion: document.getElementById("direccionComprador").value.trim(),
       metodoPago,
       fechaRecoger: document.getElementById("fechaRecoger")?.value || null,
       horaRecoger: document.getElementById("horaRecoger")?.value || null,
@@ -91,16 +81,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     // Validaciones básicas
-    if (!datos.nombre || !datos.correo || !datos.telefono || !datos.direccion) {
-      return alert("Por favor completa todos los datos personales antes de finalizar la compra.");
-    }
 
     if (metodoPago === "recoger" && (!datos.fechaRecoger || !datos.horaRecoger)) {
       return alert("Debes seleccionar fecha y hora para recoger en comercio.");
     }
 
     try {
-      // 🔄 Enviar datos al backend
       const response = await fetch("/api/finalizar-compra", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -111,21 +97,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (response.ok && result.success) {
         if (result.redirect) {
-          // 🔁 Redirigir a la factura (caso PSE)
           alert(result.message);
           window.location.href = result.redirect;
         } else {
-          // Mostrar mensaje en la misma página
           const mensajeDiv = document.createElement("div");
           mensajeDiv.className = "alert alert-success mt-4 text-center";
           mensajeDiv.textContent = result.message;
           document.querySelector("main.container").appendChild(mensajeDiv);
 
-          // Limpiar productos del carrito en la tabla
           tabla.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No hay productos en el carrito.</td></tr>`;
           totalGeneral.textContent = "$0.00";
 
-          // Ocultar botón para evitar reenvíos
           btnFinalizar.disabled = true;
           btnFinalizar.textContent = "Compra registrada";
         }
@@ -137,4 +119,39 @@ document.addEventListener("DOMContentLoaded", async () => {
       alert("Error de conexión con el servidor.");
     }
   });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const producto = JSON.parse(localStorage.getItem('productoCompra'));
+
+  if (!producto) {
+    document.getElementById('tabla-productos').innerHTML = `
+      <tr><td colspan="4" class="text-center text-danger">No se encontró información del producto.</td></tr>
+    `;
+    return;
+  }
+
+  const cantidad = 1;
+  const precioUnitario = Number(producto.precio);
+  const total = precioUnitario * cantidad;
+
+  const filaHTML = `
+    <tr class="text-center">
+      <td>${producto.nombre}</td>
+      <td>${cantidad}</td>
+      <td>$${precioUnitario.toLocaleString('es-CO')}</td>
+      <td>$${total.toLocaleString('es-CO')}</td>
+    </tr>
+  `;
+
+  document.getElementById('tabla-productos').innerHTML = filaHTML;
+  document.getElementById('total-general').textContent = `$${total.toLocaleString('es-CO')}`;
+
+  // Si tienes datos del comercio, puedes mostrarlos aquí también
+  if (document.getElementById('nombreComercio')) {
+    document.getElementById('nombreComercio').textContent = producto.nombreComercio || 'No especificado';
+  }
+  if (document.getElementById('direccionComercio')) {
+    document.getElementById('direccionComercio').textContent = producto.direccionComercio || 'No especificada';
+  }
 });

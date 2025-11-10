@@ -14,147 +14,35 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
-<style>
-  /* ====== ESTILO BASE ====== */
-  body {
-    background-color: #f9fafb;
-    color: #333;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  }
-
-  /* ====== HEADER & NAV ====== */
-  header {
-    background: linear-gradient(90deg, #ff0000, #004b87);
-    color: white;
-  }
-
-  .navbar a {
-    color: white;
-    text-decoration: none;
-    transition: 0.3s;
-  }
-
-  .navbar a:hover {
-    color: #f1f1f1;
-  }
-
-  .nav {
-    background: linear-gradient(135deg, #ff0000, #004B87);
-    color: #fff;
-  }
-
-  /* ====== TARJETAS ====== */
-  .card,
-  .card-grua {
-    background-color: #ffffff;
-    border-radius: 16px;
-    border: none;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-  }
-
-  .card-grua:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-  }
-
-  .card-grua img {
-    height: 220px;
-    object-fit: cover;
-  }
-
-  /* ====== FORMULARIOS ====== */
-  .form-label {
-    color: #222;
-    font-weight: 600;
-  }
-
-  .search-bar {
-    max-width: 600px;
-    border-radius: 25px;
-    padding: 12px 20px;
-    border: 1px solid #ccc;
-    transition: all 0.3s;
-  }
-
-  .search-bar:focus {
-    outline: none;
-    border-color: #004B87;
-    box-shadow: 0 0 8px rgba(0, 75, 135, 0.3);
-  }
-
-  /* ====== BOTONES ====== */
-  .btn-primary {
-    background: green;
-    border: none;
-    color: #fff;
-    transition: 0.3s;
-  }
-
-  .btn-primary:hover {
-    opacity: 0.95;
-    background: #008000;
-  }
-
-  /* ====== FOOTER ====== */
-  footer {
-    background: linear-gradient(90deg, #ff0000, #004b87);
-    color: white;
-  }
-
-  footer a {
-    color: #fff;
-    text-decoration: none;
-  }
-
-  footer a:hover {
-    color: #ffdddd;
-  }
-
-  /* ====== BADGES ====== */
-  .badge {
-    font-size: 0.9rem;
-    padding: 0.5em 0.8em;
-  }
-
-  /* ====== ANIMACIONES ====== */
-  .shadow-lg {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
-  }
-
-  .transition {
-    transition: all 0.3s ease;
-  }
-</style>
-
+  <link rel="stylesheet" href="marketGrua.css"/>
 </head>
 
 <body>
 <!-- HEADER -->
 <header class="header text-white py-4 px-6 shadow-lg">
   <div class="max-w-7xl mx-auto flex items-center justify-between">
-    <!-- Logo -->
+  <!-- Logo + Eslogan -->
     <div class="flex items-center space-x-4">
-      <img src="IMAGENINGRESO/nuevo logo.jpeg" alt="Logo RPM" class="w-20 h-20 object-cover rounded-full shadow-lg" />
-      <div>
+      <img src="../General/IMAGENINGRESO/nuevo logo.jpeg" alt="RPM Logo" class="w-20 h-20 object-cover rounded-full shadow-lg"/>
+      <div class="flex flex-col">
         <h1 class="text-4xl font-extrabold tracking-wide">RPM</h1>
-        <p class="text-gray-200 italic">Confianza que mueve tu camino</p>
+        <p class="text-lg text-gray-200 italic">Confianza que mueve tu camino</p>
       </div>
     </div>
 
-    <!-- Perfil -->
-    <div class="dropdown">
-      <button class="flex items-center bg-transparent border-0 text-white" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        <img src="image/imagen_perfil.png" alt="Usuario" class="w-16 h-16 object-cover rounded-full border-2 border-white mr-2"/>
-        <span class="font-semibold text-lg">Juan Pérez</span>
-      </button>
-      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="perfilDropdown">
-        <li><a class="dropdown-item" href="#">Editar perfil</a></li>
-        <li><a class="dropdown-item" href="#">Configuración</a></li>
-        <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item text-danger" href="ingreso.html">Cerrar sesión</a></li>
-      </ul>
+  <!-- PERFIL EN HEADER -->
+    <div class="flex items-center space-x-4">
+      <div class="dropdown">
+        <button class="flex items-center bg-transparent border-0 text-white" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <img id="foto-usuario" src="../image/imagen_perfil.png" alt="Usuario" class="w-20 h-20 object-cover rounded-full border-2 border-white mr-2"/>
+          <span class="font-semibold text-lg" id="nombre-usuario">Cargando...</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="perfilDropdown">
+          <li><a class="dropdown-item" href="Editar_perfil.html">Configuración Perfil</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item text-danger" href="/logout">Cerrar sesión</a></li>
+        </ul>
+      </div>
     </div>
   </div>
 
@@ -169,15 +57,13 @@
 
     <!-- Sección derecha: enlaces -->
     <div class="flex items-center space-x-8 mt-3 md:mt-0">
-      <a href="index.html" class="hover:text-gray-200 transition">Inicio</a>
-      <a href="Natural/perfil_usuario.html" class="hover:text-gray-200 transition">Perfil</a>
+      <a href="../Natural/perfil_usuario.html" class="hover:text-gray-200 transition">Inicio</a>
       <a href="CentroAyuda.html" class="hover:text-gray-200 transition">Centro de ayuda</a>
 
     </div>
 
   </div>
 </nav>
-
 </header>
 <!-- CONTENIDO PRINCIPAL -->
 <section class="container my-5">
@@ -189,44 +75,11 @@
   <!-- Directorio -->
   <main>
     <div class="row g-4" id="listadoGruas">
-      <!-- Tarjeta 1 -->
-      <div class="col-md-4">
-        <div class="card card-grua h-100">
-          <img src="image/grua1.jpg" class="card-img-top" alt="Servicio de grúa">
-          <div class="card-body">
-            <h5 class="card-title fw-bold">Gruas Rápidas Bogotá</h5>
-            <p class="card-text">Servicio 24/7 en Bogotá y alrededores. Atención inmediata en accidentes y averías.</p>
-            <a href="Natural/detalle_publicaciongrua.html" class="btn btn-primary w-100"><i class="fas fa-info-circle me-2"></i>Ver Detalles</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tarjeta 2 -->
-      <div class="col-md-4">
-        <div class="card card-grua h-100">
-          <img src="image/grua2.jpg" class="card-img-top" alt="Servicio de grúa">
-          <div class="card-body">
-            <h5 class="card-title fw-bold">Asistencia Vial Express</h5>
-            <p class="card-text">Cobertura nacional con flota moderna. Ideal para transporte de vehículos pesados.</p>
-            <a href="Natural/detalle_publicaciongrua.html" class="btn btn-primary w-100"><i class="fas fa-info-circle me-2"></i>Ver Detalles</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tarjeta 3 -->
-      <div class="col-md-4">
-        <div class="card card-grua h-100">
-          <img src="image/grua3.jpg" class="card-img-top" alt="Servicio de grúa">
-          <div class="card-body">
-            <h5 class="card-title fw-bold">Grúas del Norte</h5>
-            <p class="card-text">Especialistas en transporte de motos y autos. Servicios económicos y confiables.</p>
-            <a href="Natural/detalle_publicaciongrua.html" class="btn btn-primary w-100"><i class="fas fa-info-circle me-2"></i>Ver Detalles</a>
-          </div>
-        </div>
-      </div>
+      <!-- Las tarjetas se insertarán dinámicamente aquí -->
     </div>
   </main>
 </section>
+
 <!-- FOOTER -->
 <footer class="footer text-white py-10 px-6 mt-20">
   <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -257,18 +110,8 @@
 </footer>
 
 
-<script>
-  // Filtro de búsqueda (básico)
-  const input = document.getElementById('buscar');
-  const cards = document.querySelectorAll('#listadoGruas .card');
-
-  input.addEventListener('keyup', () => {
-    const term = input.value.toLowerCase();
-    cards.forEach(card => {
-      const text = card.innerText.toLowerCase();
-      card.parentElement.style.display = text.includes(term) ? 'block' : 'none';
-    });
-  });
-</script>
+<script src="../JS/market_gruas.js"></script>
+<script src="../JS/perfil_usuario.js"></script>
+<script src="../JS/UsuarioSesion.js"></script>
 </body>
 </html>

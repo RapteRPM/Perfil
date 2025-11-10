@@ -13,70 +13,58 @@
 </head>
 <body>
 <!-- HEADER -->
-<header class="header text-white py-4 px-6 shadow-lg">
+<header class="header text-white py-4 px-6">
   <div class="max-w-7xl mx-auto flex items-center justify-between">
-    <!-- Logo -->
+    <!-- Logo + Eslogan -->
     <div class="flex items-center space-x-4">
-      <img src="image/nuevo logo.jpeg" alt="Logo RPM" class="w-20 h-20 object-cover rounded-full shadow-lg" />
-      <div>
+      <img src="../General/IMAGENINGRESO/nuevo logo.jpeg" alt="RPM Logo" class="w-20 h-20 object-cover rounded-full shadow-lg"/>
+      <div class="flex flex-col">
         <h1 class="text-4xl font-extrabold tracking-wide">RPM</h1>
-        <p class="text-gray-200 italic">Confianza que mueve tu camino</p>
+        <p class="text-lg text-gray-200 italic">Confianza que mueve tu camino</p>
       </div>
     </div>
 
-    <!-- Perfil -->
-    <div class="dropdown">
-      <button class="flex items-center bg-transparent border-0 text-white" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        <img src="IMAGENINGRESO/nuevo logo.jpeg" alt="Usuario" class="w-16 h-16 object-cover rounded-full border-2 border-white mr-2"/>
-        <span class="font-semibold text-lg">Juan Pérez</span>
-      </button>
-      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="perfilDropdown">
-        <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item text-danger" href="ingreso.html">Cerrar sesión</a></li>
-      </ul>
-    </div>
+    <!-- Perfil dinámico -->
+    <div id="perfilHeader" class="flex items-center space-x-4"></div>
   </div>
+</header>
 
-  <!-- NAV -->
-<nav class="nav text-white py-4 px-8 shadow-md mt-6 rounded-b-2xl">
-  <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between w-full">
-
-    <!-- Sección izquierda: Icono + título -->
-    <div class="flex items-center space-x-3">
-      <h1 class="text-2xl font-bold tracking-wide">Centro de ayuda</h1>
+<!-- NAVBAR (fuera del bloque del header) -->
+<nav class="nav2 text-white py-4 px-6 shadow-lg sticky top-0 z-50" style="background-color: #004B87; border-radius: 0 0 1rem 1rem;">
+  <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <!-- Marca -->
+    <div class="flex items-center">
+      <i class="fas fa-headset text-2xl mr-2"></i>
+      <h1 class="text-xl font-bold tracking-wide">Centro de Ayuda</h1>
     </div>
-
-    <!-- Sección derecha: enlaces -->
-    <div class="flex items-center space-x-8 mt-3 md:mt-0">
-      <a href="#apartadoiniciosegunusuariologueado" class="hover:text-gray-200 transition">Inicio</a>
+    <!-- Links -->
+    <div class="hidden md:flex items-center space-x-6">
+      <a href="../General/index.html" class="hover:text-gray-200 transition">Inicio</a>
     </div>
+    <!-- Móvil -->
+    <button class="md:hidden text-white"><i class="fas fa-bars text-xl"></i></button>
   </div>
 </nav>
-</header>
+
   <!-- MAIN -->
   <main class="container my-5">
     <div class="card p-4">
-      <h4 class="fw-bold mb-3"><i class="fas fa-headset me-2 text-primary"></i>¿Tienes una sugerencia, queja o reclamo?</h4>
-      <p class="text-muted mb-4">Por favor diligencia el siguiente formulario. Nuestro equipo revisará tu solicitud y te contactará lo más pronto posible.</p>
+      <h4 class="fw-bold mb-3">
+        <i class="fas fa-headset me-2 text-primary"></i>¿Tienes una sugerencia, queja o reclamo?
+      </h4>
+      <p class="text-muted mb-4">
+        Por favor diligencia el siguiente formulario. Nuestro equipo revisará tu solicitud y te contactará lo más pronto posible.
+      </p>
+
       <form id="formAyuda" class="mt-3">
-        <!-- Tipo -->
+        <!-- Tipo de solicitud -->
         <div class="mb-3">
           <label for="tipo" class="form-label">Tipo de solicitud</label>
           <select class="form-select" id="tipo" required>
             <option value="">Seleccione una opción</option>
-            <option value="sugerencia">Sugerencia</option>
-            <option value="queja">Queja</option>
-            <option value="reclamo">Reclamo</option>
-          </select>
-        </div>
-        <!-- Rol -->
-        <div class="mb-3">
-          <label for="rol" class="form-label">Soy un:</label>
-          <select class="form-select" id="rol" required>
-            <option value="">Seleccione su rol</option>
-            <option value="natural">Usuario Natural</option>
-            <option value="comerciante">Comerciante</option>
-            <option value="prestador">Prestador de servicios</option>
+            <option value="Sugerencia">Sugerencia</option>
+            <option value="Queja">Queja</option>
+            <option value="Reclamo">Reclamo</option>
           </select>
         </div>
         <!-- Asunto -->
@@ -84,21 +72,24 @@
           <label for="asunto" class="form-label">Asunto</label>
           <input type="text" class="form-control" id="asunto" placeholder="Ej: Problema con un pedido" required>
         </div>
+
         <!-- Descripción -->
         <div class="mb-3">
           <label for="descripcion" class="form-label">Descripción</label>
           <textarea class="form-control" id="descripcion" rows="5" placeholder="Describe tu solicitud con detalle..." required></textarea>
         </div>
+
         <!-- Botones -->
         <div class="text-end">
           <button type="reset" class="btn btn-outline-secondary me-2">Limpiar</button>
           <button type="submit" class="btn btn-primary">Enviar</button>
         </div>
       </form>
-    </div>
-    <!-- Mensaje de confirmación -->
-    <div id="mensajeExito" class="alert alert-success mt-4 d-none" role="alert">
-      ✅ ¡Tu solicitud ha sido enviada con éxito! Pronto recibirás respuesta.
+
+      <!-- Mensaje de confirmación -->
+      <div id="mensajeExito" class="alert alert-success mt-4 d-none" role="alert">
+        ✅ ¡Tu solicitud ha sido enviada con éxito! Pronto recibirás respuesta.
+      </div>
     </div>
   </main>
 <!-- FOOTER -->
@@ -130,12 +121,6 @@
   </div>
 </footer>
   <!-- Script -->
-  <script>
-    document.getElementById("formAyuda").addEventListener("submit", function(e) {
-      e.preventDefault();
-      document.getElementById("mensajeExito").classList.remove("d-none");
-      this.reset();
-    });
-  </script>
+  <script src="../JS/centroAyuda.js"></script>
 </body>
 </html>

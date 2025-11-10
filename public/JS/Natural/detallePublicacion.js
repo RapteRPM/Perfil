@@ -28,33 +28,50 @@ document.addEventListener('DOMContentLoaded', () => {
         imagenes = p.ImagenProducto.map(img => img.replace(/\\/g, '/').trim());
       } else if (typeof p.ImagenProducto === 'string') {
         imagenes = p.ImagenProducto.split(',').map(img => img.replace(/\\/g, '/').trim());
-      } else {
-        imagenes = ['image/placeholder.png'];
       }
 
-      if (imagenes.length > 1) {
-        const carouselHTML = `
-          <div id="carouselProducto" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-inner">
-              ${imagenes.map((src, i) => `
-                <div class="carousel-item ${i === 0 ? 'active' : ''}">
-                  <img src="/${src}" class="d-block w-100 producto-imagen" alt="Imagen ${i + 1}">
-                </div>
-              `).join('')}
-            </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#carouselProducto" data-bs-slide="prev">
-              <span class="carousel-control-prev-icon"></span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#carouselProducto" data-bs-slide="next">
-              <span class="carousel-control-next-icon"></span>
-            </button>
-          </div>
-        `;
-        imgContainer.parentNode.innerHTML = carouselHTML;
-      } else {
-        imgContainer.src = `/${imagenes[0]}`;
-        imgContainer.classList.add('producto-imagen');
+      // Si no hay imágenes válidas, usar una por defecto
+      if (!imagenes || imagenes.length === 0) {
+        imagenes = ['imagen/placeholder.png'];
       }
+
+          // Normalizar rutas y asegurar que sean absolutas
+          imagenes = imagenes.map(img => {
+            if (!img) return '/imagen/placeholder.png';
+            let ruta = img.replace(/\\/g, '/').trim();
+            ruta = ruta.replace(/^\/?(Imagen|image|Natural)\//i, ''); // elimina prefijos incorrectos
+            return '/imagen/' + ruta;
+          });
+
+          // Verificar si hay contenedor de imagen
+          if (imgContainer) {
+            if (imagenes.length > 1) {
+              const carouselHTML = `
+                <div id="carouselProducto" class="carousel slide" data-bs-ride="carousel">
+                  <div class="carousel-inner">
+                    ${imagenes.map((src, i) => `
+                      <div class="carousel-item ${i === 0 ? 'active' : ''}">
+                        <img src="${src}" class="d-block w-100 producto-imagen" alt="Imagen ${i + 1}" onerror="this.src='/imagen/placeholder.png'">
+                      </div>
+                    `).join('')}
+                  </div>
+                  <button class="carousel-control-prev" type="button" data-bs-target="#carouselProducto" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon"></span>
+                  </button>
+                  <button class="carousel-control-next" type="button" data-bs-target="#carouselProducto" data-bs-slide="next">
+                    <span class="carousel-control-next-icon"></span>
+                  </button>
+                </div>
+              `;
+              imgContainer.parentNode.innerHTML = carouselHTML;
+            } else {
+              imgContainer.src = imagenes[0];
+              imgContainer.classList.add('producto-imagen');
+              imgContainer.onerror = () => {
+                imgContainer.src = '/imagen/placeholder.png';
+              };
+            }
+          }
 
       // ===============================
       // ⭐ Calificación promedio
@@ -85,41 +102,53 @@ document.addEventListener('DOMContentLoaded', () => {
       // ===============================
       // 🛒 Botones de acción
       // ===============================
-        document.querySelector('.btn-primary').addEventListener('click', async () => {
-        try {
-            // 🧩 Obtener usuario desde localStorage
+      const btnAgregar = document.querySelector('.btn-primary');
+      if (btnAgregar) {
+        btnAgregar.addEventListener('click', async () => {
+          try {
             const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo'));
-
             if (!usuarioActivo) {
-            alert('⚠️ Debes iniciar sesión para agregar productos al carrito.');
-            return;
+              alert('⚠️ Debes iniciar sesión para agregar productos al carrito.');
+              return;
             }
 
             const response = await fetch('/api/carrito', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                idUsuario: usuarioActivo.id, // ✅ ID real del usuario logueado
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                idUsuario: usuarioActivo.id,
                 idPublicacion: p.IdPublicacion,
                 cantidad: 1
-            })
+              })
             });
 
             const result = await response.json();
-
             if (response.ok) {
-            alert('🛒 ' + result.msg);
+              alert('🛒 ' + result.msg);
             } else {
-            alert(`❌ Error: ${result.msg}`);
+              alert(`❌ Error: ${result.msg}`);
             }
-
-        } catch (err) {
+          } catch (err) {
             console.error('Error agregando al carrito:', err);
             alert('❌ Ocurrió un error al agregar el producto al carrito.');
-        }
+          }
         });
+      }
 
+const btnComprar = document.querySelector('#btn-comprar-ahora');
+if (btnComprar) {
+  btnComprar.addEventListener('click', () => {
+    const producto = {
+      id: p.IdPublicacion,
+      nombre: p.NombreProducto,
+      precio: p.Precio,
+      imagen: imagenes[0] || '/imagen/placeholder.png'
+    };
 
+    localStorage.setItem('productoCompra', JSON.stringify(producto));
+    window.location.href = '/Natural/Proceso_compra.html';
+  });
+}
       // ===============================
       // ✍️ Enviar nueva opinión
       // ===============================
@@ -130,17 +159,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const comentario = document.getElementById('comentario').value.trim();
           const calificacion = document.getElementById('calificacion').value;
-
-          // Obtener el usuario logueado desde localStorage
           const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo'));
 
           if (!usuarioActivo) {
             alert('⚠️ Debes iniciar sesión para poder comentar.');
             return;
           }
-
-          const usuarioId = usuarioActivo.id;        // id real del usuario logueado
-          const nombreUsuario = usuarioActivo.nombre; // nombre del usuario
 
           if (!comentario || !calificacion) {
             alert('Por favor, escribe un comentario y selecciona una calificación.');
@@ -152,16 +176,15 @@ document.addEventListener('DOMContentLoaded', () => {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                usuarioId,
+                usuarioId: usuarioActivo.id,
                 idPublicacion,
-                nombreUsuario,
+                nombreUsuario: usuarioActivo.nombre,
                 comentario,
                 calificacion
               })
             });
 
             const data = await res.json();
-
             if (res.ok) {
               alert('✅ Comentario guardado correctamente.');
               location.reload();
