@@ -18,7 +18,9 @@
     "nodemailer": "^7.0.10"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "NODE_ENV=development node server.js",
+    "prod": "NODE_ENV=production node server.js"
   },
   "license": "ISC"
 }

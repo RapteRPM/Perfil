@@ -1,12 +1,21 @@
 // controllers/enviarCorreo.js
-require("dotenv").config();
-const nodemailer = require("nodemailer");
+import dotenv from "dotenv";
+import nodemailer from "nodemailer";
 
-const enviarCorreo = async ({ to, subject, html }) => {
+dotenv.config();
+
+/**
+ * 📧 Envía un correo electrónico usando Outlook/Office365
+ * @param {Object} options - Opciones del correo
+ * @param {string} options.to - Destinatario
+ * @param {string} options.subject - Asunto
+ * @param {string} options.html - Contenido HTML
+ */
+export async function enviarCorreo({ to, subject, html }) {
   const transporter = nodemailer.createTransport({
     host: "smtp.office365.com", // Servidor SMTP de Outlook
     port: 587,
-    secure: false, 
+    secure: false,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
@@ -22,9 +31,9 @@ const enviarCorreo = async ({ to, subject, html }) => {
       html
     });
     console.log(`📨 Correo enviado correctamente a ${to}`);
+    return { success: true, message: "Correo enviado" };
   } catch (err) {
-    console.warn("⚠️ No se pudo enviar el correo:", err.message);
+    console.error("❌ Error al enviar correo:", err.message);
+    return { success: false, error: err.message };
   }
-};
-
-module.exports = enviarCorreo;
+}

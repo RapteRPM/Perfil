@@ -1,6 +1,7 @@
 // ===============================
 // 📦 Importaciones
 // ===============================
+import dotenv from 'dotenv';
 import { verificarSesion, evitarCache } from './middlewares/sesion.js';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -15,19 +16,22 @@ import multer from 'multer';
 import pool from './config/db.js'; // ✅ usamos pool, import moderno
 import { crearCredenciales } from './controllers/credenciales.js';
 
+dotenv.config();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Configuración general
 app.use("/api/privado", verificarSesion); 
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use("/imagen", express.static(path.join(__dirname, "public/imagen")));
+
+// 📁 Servir archivos estáticos de uploads (imágenes)
+app.use("/uploads", express.static(path.join(__dirname, 'uploads')));
 
 
 // ===============================
@@ -35,7 +39,7 @@ app.use("/imagen", express.static(path.join(__dirname, "public/imagen")));
 // ===============================
 app.use(
   session({
-    secret: 'clave-secreta-rpm',
+    secret: process.env.SESSION_SECRET || 'clave-secreta-rpm',
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -159,8 +163,8 @@ app.get('/api/usuario-actual', verificarSesion, async (req, res) => {
       tipoCarpeta = "PrestadorServicios";
     }
 
-    const rutaCarpeta = path.join(__dirname, 'public', 'Imagen', tipoCarpeta, documento.toString());
-    let fotoRutaFinal = '/image/imagen_perfil.png'; // por defecto
+    const rutaCarpeta = path.join(__dirname, 'uploads', 'imagen', tipoCarpeta, documento.toString());
+    let fotoRutaFinal = '/uploads/imagen/placeholder.png'; // por defecto
 
     if (fs.existsSync(rutaCarpeta)) {
       const archivos = fs.readdirSync(rutaCarpeta);
@@ -168,7 +172,7 @@ app.get('/api/usuario-actual', verificarSesion, async (req, res) => {
         f => f.includes(fotoGuardada) || f.match(/\.(jpg|jpeg|png|webp)$/i)
       );
       if (archivoFoto) {
-        fotoRutaFinal = `/Imagen/${tipoCarpeta}/${documento}/${archivoFoto}`;
+        fotoRutaFinal = `/uploads/imagen/${tipoCarpeta}/${documento}/${archivoFoto}`;
       }
     } else {
       console.warn(`⚠️ Carpeta de usuario no encontrada: ${rutaCarpeta}`);
@@ -246,14 +250,14 @@ app.get('/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       console.error('❌ Error al cerrar sesión:', err);
-      return res.status(500).send('Error al cerrar sesión');
+      return res.status(500).json({ error: 'Error al cerrar sesión' });
     }
 
     // 🧹 Limpia cookies de sesión para mayor seguridad
     res.clearCookie('connect.sid', { path: '/' });
 
-    // 🔄 Redirige al login
-    res.redirect('/General/ingreso.html');
+    // 🔄 Respuesta JSON en lugar de redireccionamiento
+    res.json({ success: true, message: 'Sesión cerrada correctamente' });
   });
 });
 
@@ -266,22 +270,7 @@ app.get('/api/verificar-sesion', (req, res) => {
 });
 
 // ===============================
-// 🌐 Rutas protegidas
-// ===============================
-app.get('/perfil_usuario.html', verificarSesion, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/Natural/perfil_usuario.html'));
-});
-
-app.get('/dashboard_comerciante.html', verificarSesion, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/Comerciante/dashboard_comerciante.html'));
-});
-
-app.get('/Historial_ventas.html', verificarSesion, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/Comerciante/Historial_ventas.html'));
-});
-
-// ===============================
-// 🏁 Iniciar servidor
+//  Iniciar servidor
 // ===============================
 app.listen(port, () => {
   console.log(`🚀 Servidor escuchando en: http://localhost:${port}/General/index.html`);
@@ -729,6 +718,7 @@ app.post("/api/confirmar-recibido", async (req, res) => {
 // RUTA PARA OBTENER LOS TALLERES 
 // ----------------------
 app.get('/api/talleres', async (req, res) => {
+  try {
     const [rows] = await pool.query(`
       SELECT
         U.Nombre AS NombreVendedor,
@@ -740,13 +730,9 @@ app.get('/api/talleres', async (req, res) => {
         C.DiasAtencion,
         C.Barrio
       FROM comerciante C
-      INNER JOIN usuario U ON C.Comercio = U.IdUsuario;
+      INNER JOIN usuario U ON C.Comercio = U.IdUsuario
     `);
-
-
-  try {
-    const [results] = await pool.query(sql);
-    res.json(results);
+    res.json(rows);
   } catch (err) {
     console.error('❌ Error al obtener ubicaciones:', err);
     res.status(500).json({ error: 'Error al obtener ubicaciones' });
@@ -759,7 +745,7 @@ app.get('/api/talleres', async (req, res) => {
 // ===============================
 import fetch from 'node-fetch'; // si no lo tienes instalado: npm install node-fetch
 
-const tempDir = path.join(process.cwd(), 'public', 'imagen', 'temp');
+const tempDir = path.join(__dirname, 'uploads', 'imagen', 'temp');
 fs.mkdirSync(tempDir, { recursive: true });
 
 // Guardamos primero en temp
@@ -849,8 +835,8 @@ app.post(
 
       // Mover la foto a su carpeta final
       const finalUserDir = path.join(
-        process.cwd(),
-        'public',
+        __dirname,
+        'uploads',
         'imagen',
         tipoFolder,
         idUsuarioValue
@@ -863,7 +849,7 @@ app.post(
       const finalFotoPath = path.join(finalUserDir, finalFotoName);
       fs.renameSync(fotoPerfilFile.path, finalFotoPath);
       const fotoRuta = path
-        .join('imagen', tipoFolder, idUsuarioValue, finalFotoName)
+        .join('uploads/imagen', tipoFolder, idUsuarioValue, finalFotoName)
         .replace(/\\/g, '/');
 
       await queryPromise(
@@ -1095,8 +1081,8 @@ app.post('/api/publicar', uploadPublicacion.array('imagenesProducto', 5), async 
 
     // 🔹 Crear carpeta de la publicación usando su ID
     const carpetaPublicacion = path.join(
-      process.cwd(),
-      'public', 'imagen', 'Comerciante', usuario.id.toString(), 'publicaciones', idPublicacion.toString()
+      __dirname,
+      'uploads', 'imagen', 'Comerciante', usuario.id.toString(), 'publicaciones', idPublicacion.toString()
     );
     fs.mkdirSync(carpetaPublicacion, { recursive: true });
 
@@ -1107,7 +1093,7 @@ app.post('/api/publicar', uploadPublicacion.array('imagenesProducto', 5), async 
         const destino = path.join(carpetaPublicacion, file.filename);
         fs.renameSync(file.path, destino);
         imagenes.push(
-          path.join('imagen', 'Comerciante', usuario.id.toString(), 'publicaciones', idPublicacion.toString(), file.filename)
+          path.join('uploads/imagen', 'Comerciante', usuario.id.toString(), 'publicaciones', idPublicacion.toString(), file.filename)
         );
       });
     }
@@ -1115,7 +1101,7 @@ app.post('/api/publicar', uploadPublicacion.array('imagenesProducto', 5), async 
     // 🔹 Si no hay imágenes, usar una por defecto
     const imagenFinal = imagenes.length > 0
       ? JSON.stringify(imagenes)
-      : JSON.stringify(['/imagen/default_producto.jpg']);
+      : JSON.stringify(['/uploads/imagen/placeholder.png']);
 
     // 🔹 Actualizar publicación con rutas finales
     await connection.query(
@@ -1239,7 +1225,7 @@ app.delete('/api/publicaciones/:id', async (req, res) => {
     // 🔹 5️⃣ Eliminar carpeta completa de la publicación
     const carpetaPublicacion = path.join(
       __dirname,
-      'public',
+      'uploads',
       'imagen',
       'Comerciante',
       usuario.id.toString(),
@@ -1357,7 +1343,7 @@ app.get('/api/categorias', async (req, res) => {
 // 📂 MULTER PARA EDITAR PUBLICACIONES
 const storageEditar = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, 'public', 'imagen', 'temp_editar');
+    const uploadPath = path.join(__dirname, 'uploads', 'imagen', 'temp_editar');
     if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);
   },
@@ -1566,7 +1552,7 @@ app.put(
         const tipoFolder = "Comerciante";
         const userFolder = path.join(
           __dirname,
-          "public",
+          "uploads",
           "imagen",
           tipoFolder,
           idUsuario
@@ -1577,7 +1563,7 @@ app.put(
 
         // Eliminar foto anterior (si existe)
         if (rutaFotoFinal) {
-          const rutaFotoAnterior = path.join(__dirname, "public", rutaFotoFinal);
+          const rutaFotoAnterior = path.join(__dirname, rutaFotoFinal);
           if (fs.existsSync(rutaFotoAnterior)) {
             fs.unlinkSync(rutaFotoAnterior);
           }
@@ -1694,7 +1680,11 @@ app.get("/api/perfilComerciante/:idUsuario", async (req, res) => {
 ///APARTADO DE CONTROL DE AGENDA - COMERCIANTE 
 
 app.get('/api/privado/citas', async (req, res) => {
-  const idUsuario = req.session?.usuario?.IdUsuario || 123;
+  const idUsuario = req.session?.usuario?.id;
+
+  if (!idUsuario) {
+    return res.status(401).json({ error: 'No autenticado' });
+  }
 
   try {
     const [comercioRows] = await pool.query(
@@ -1750,11 +1740,11 @@ app.put("/api/actualizarPerfilNatural/:idUsuario", upload.single("FotoPerfil"), 
 
     if (nuevaFoto) {
       const tipoFolder = "Natural";
-      const userFolder = path.join(__dirname, "public", "imagen", tipoFolder, idUsuario);
+      const userFolder = path.join(__dirname, "uploads", "imagen", tipoFolder, idUsuario);
       fs.mkdirSync(userFolder, { recursive: true });
 
       if (rutaFotoFinal) {
-        const rutaFotoAnterior = path.join(__dirname, "public", rutaFotoFinal);
+        const rutaFotoAnterior = path.join(__dirname, rutaFotoFinal);
         if (fs.existsSync(rutaFotoAnterior)) {
           fs.unlinkSync(rutaFotoAnterior);
         }
@@ -1764,7 +1754,7 @@ app.put("/api/actualizarPerfilNatural/:idUsuario", upload.single("FotoPerfil"), 
       const rutaDestino = path.join(userFolder, nuevoNombreFoto);
       fs.renameSync(nuevaFoto.path, rutaDestino);
 
-      rutaFotoFinal = path.join("imagen", tipoFolder, idUsuario, nuevoNombreFoto).replace(/\\/g, "/");
+      rutaFotoFinal = path.join("uploads/imagen", tipoFolder, idUsuario, nuevoNombreFoto).replace(/\\/g, "/");
 
       await pool.query("UPDATE Usuario SET FotoPerfil = ? WHERE IdUsuario = ?", [rutaFotoFinal, idUsuario]);
     }
@@ -2429,8 +2419,8 @@ app.get('/api/perfil-prestador', async (req, res) => {
       tipoCarpeta = "PrestadorServicios"; // ✅ Corrección de nombre de carpeta
     }
 
-    const rutaCarpeta = path.join(__dirname, 'public', 'Imagen', tipoCarpeta, user.Documento.toString());
-    let fotoRutaFinal = '/image/imagen_perfil.png'; // por defecto
+    const rutaCarpeta = path.join(__dirname, 'uploads', 'imagen', tipoCarpeta, user.Documento.toString());
+    let fotoRutaFinal = '/uploads/imagen/placeholder.png'; // por defecto
 
     if (fs.existsSync(rutaCarpeta)) {
       const archivos = fs.readdirSync(rutaCarpeta);
@@ -2438,7 +2428,7 @@ app.get('/api/perfil-prestador', async (req, res) => {
         f => f.includes(user.FotoPerfil) || f.match(/\.(jpg|jpeg|png|webp)$/i)
       );
       if (archivoFoto) {
-        fotoRutaFinal = `/Imagen/${tipoCarpeta}/${user.Documento}/${archivoFoto}`;
+        fotoRutaFinal = `/uploads/imagen/${tipoCarpeta}/${user.Documento}/${archivoFoto}`;
       }
     } else {
       console.warn(`⚠️ Carpeta de usuario no encontrada: ${rutaCarpeta}`);
