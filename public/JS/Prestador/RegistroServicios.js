@@ -1,6 +1,8 @@
 async function cargarPublicacionesGrua() {
   try {
-    const res = await fetch('/api/publicaciones-grua');
+    const res = await fetch('http://localhost:3000/api/publicaciones-grua', {
+      credentials: 'include'
+    });
     const publicaciones = await res.json();
 
     const contenedor = document.querySelector('.grid');
@@ -63,7 +65,10 @@ async function eliminarPublicacionGrua(id) {
   if (!confirm('¿Deseas eliminar esta publicación?')) return;
 
   try {
-    const res = await fetch(`/api/publicaciones-grua/${id}`, { method: 'DELETE' });
+    const res = await fetch(`http://localhost:3000/api/publicaciones-grua/${id}`, { 
+      method: 'DELETE',
+      credentials: 'include'
+    });
     const data = await res.json();
 
     if (res.ok) {

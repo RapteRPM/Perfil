@@ -14,7 +14,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ Cargar datos del perfil
   try {
-    const res = await fetch(`/api/perfilComerciante/${usuarioId}`);
+    const res = await fetch(`http://localhost:3000/api/perfilComerciante/${usuarioId}`, {
+      credentials: 'include'
+    });
     if (!res.ok) {
       console.error("Fetch perfil falló:", res.status, res.statusText);
       return;
@@ -56,8 +58,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const formData = new FormData(form); // ✅ incluye automáticamente FotoPerfil si el input tiene name="FotoPerfil"
 
     try {
-      const res = await fetch(`/api/actualizarPerfilComerciante/${usuarioId}`, {
+      const res = await fetch(`http://localhost:3000/api/actualizarPerfilComerciante/${usuarioId}`, {
         method: "PUT",
+        credentials: 'include',
         body: formData,
       });
 

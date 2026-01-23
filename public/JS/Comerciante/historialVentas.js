@@ -97,7 +97,9 @@ btnExcel.addEventListener("click", async () => {
   });
 
   try {
-    const response = await fetch(`/api/historial-ventas/excel?${params.toString()}`);
+    const response = await fetch(`http://localhost:3000/api/historial-ventas/excel?${params.toString()}`, {
+      credentials: 'include'
+    });
     const data = await response.json();
 
     if (!data.success) {

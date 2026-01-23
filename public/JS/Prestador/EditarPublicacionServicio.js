@@ -93,8 +93,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     try {
-      const res = await fetch(`/api/publicaciones-grua/${idPublicacion}`, {
+      const res = await fetch(`http://localhost:3000/api/publicaciones-grua/${idPublicacion}`, {
         method: "PUT",
+        credentials: 'include',
         body: formData,
         credentials: 'include'
       });

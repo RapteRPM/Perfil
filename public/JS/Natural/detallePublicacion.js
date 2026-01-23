@@ -112,8 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
               return;
             }
 
-            const response = await fetch('/api/carrito', {
+            const response = await fetch('http://localhost:3000/api/carrito', {
               method: 'POST',
+              credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 idUsuario: usuarioActivo.id,
@@ -172,8 +173,9 @@ if (btnComprar) {
           }
 
           try {
-            const res = await fetch('/api/opiniones', {
+            const res = await fetch('http://localhost:3000/api/opiniones', {
               method: 'POST',
+              credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 usuarioId: usuarioActivo.id,

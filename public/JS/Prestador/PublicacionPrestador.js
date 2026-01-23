@@ -96,8 +96,9 @@ document.getElementById("formPublicarGrua").addEventListener("submit", async fun
   }
 
   try {
-    const res = await fetch("/api/publicar-grua", {
+    const res = await fetch("http://localhost:3000/api/publicar-grua", {
       method: "POST",
+      credentials: 'include',
       body: formData
     });
 

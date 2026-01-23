@@ -1,9 +1,10 @@
 // 📁 public/JS/usuarioSesion.js
+import { API_CONFIG, fetchAPI } from './api-config.js';
 
 // 🧭 Función para cargar la info del usuario en el header (nombre y foto)
 async function cargarUsuarioHeader() {
   try {
-    const res = await fetch("/api/usuario-actual");
+    const res = await fetchAPI(API_CONFIG.AUTH.USUARIO_ACTUAL);
     if (!res.ok) throw new Error("No autenticado");
 
     const data = await res.json();

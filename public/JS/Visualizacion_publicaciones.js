@@ -132,7 +132,9 @@ function filtrarCategoria(nombre) {
  */
 async function cargarCategorias() {
   try {
-    const res = await fetch('/api/categorias');
+    const res = await fetch('http://localhost:3000/api/categorias', {
+      credentials: 'include'
+    });
     const categorias = await res.json();
 
     const contenedor = document.getElementById("contenedor-categorias");
@@ -182,7 +184,9 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener('DOMContentLoaded', async () => {
   // 🔹 Mostrar todos los productos públicos
   try {
-    const res = await fetch('/api/publicaciones_publicas?limite=12'); // Puedes ajustar el límite
+    const res = await fetch('http://localhost:3000/api/publicaciones_publicas?limite=12', {
+      credentials: 'include'
+    }); // Puedes ajustar el límite
     const productos = await res.json();
 
     if (Array.isArray(productos) && productos.length > 0) {

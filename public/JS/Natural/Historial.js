@@ -23,7 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
     ].join('&');
 
     try {
-      const res = await fetch(`/api/historial?${query}`);
+      const res = await fetch(`http://localhost:3000/api/historial?${query}`, {
+        credentials: 'include'
+      });
       if (!res.ok) throw new Error('Error en la petición');
       const data = await res.json();
 
@@ -84,8 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!confirm(`¿Deseas marcar este pedido como ${nuevoEstado}?`)) return;
 
       try {
-        const res = await fetch(`/api/historial/estado/${id}`, {
+        const res = await fetch(`http://localhost:3000/api/historial/estado/${id}`, {
           method: 'PUT',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ estado: nuevoEstado })
         });
@@ -110,7 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!confirm("¿Deseas eliminar este registro de compra?")) return;
 
       try {
-        const res = await fetch(`/api/historial/eliminar/${facturaId}`, { method: "DELETE" });
+        const res = await fetch(`http://localhost:3000/api/historial/eliminar/${facturaId}`, { 
+          method: "DELETE",
+          credentials: 'include'
+        });
         const data = await res.json();
         if (res.ok && data.success) {
           alert("✅ Registro eliminado correctamente.");

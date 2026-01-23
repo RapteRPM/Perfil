@@ -1,24 +1,16 @@
 {
-  "name": "proytecto",
+  "name": "rpm-market-frontend",
   "version": "1.0.0",
+  "description": "Frontend del marketplace RPM Market",
   "type": "module",
-  "main": "server.js",
-  "dependencies": {
-    "aws-ssl-profiles": "^1.1.2",
-    "axios": "^1.11.0",
-    "bcrypt": "^6.0.0",
-    "body-parser": "^2.2.0",
-    "dotenv": "^17.2.3",
-    "exceljs": "^4.4.0",
-    "express": "^5.1.0",
-    "express-session": "^1.18.2",
-    "multer": "^2.0.2",
-    "mysql2": "^3.14.1",
-    "node-fetch": "^3.3.2",
-    "nodemailer": "^7.0.10"
-  },
   "scripts": {
-    "start": "node server.js"
+    "dev": "npx http-server . -p 5500 -c-1",
+    "start": "npx http-server . -p 5500"
   },
-  "license": "ISC"
+  "keywords": ["marketplace", "repuestos", "frontend"],
+  "author": "RPM Team",
+  "license": "ISC",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
 }

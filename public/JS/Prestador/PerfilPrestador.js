@@ -20,7 +20,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   try {
-    const res = await fetch("/api/perfil-prestador");
+    const res = await fetch("http://localhost:3000/api/perfil-prestador", {
+      credentials: 'include'
+    });
     if (!res.ok) throw new Error("No se pudo cargar el perfil");
 
     const data = await res.json();

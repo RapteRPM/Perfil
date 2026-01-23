@@ -23,8 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const response = await fetch(`/api/usuarios/${idUsuario}/contrasena`, {
+      const response = await fetch(`http://localhost:3000/api/usuarios/${idUsuario}/contrasena`, {
         method: "PUT",
+        credentials: 'include',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nuevaContrasena: nueva })
       });

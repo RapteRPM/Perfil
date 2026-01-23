@@ -15,7 +15,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 🛒 Cargar productos del carrito desde la API
   let comercio = { nombre: '', direccion: '' };
   try {
-    const resp = await fetch("/api/proceso-compra");
+    const resp = await fetch("http://localhost:3000/api/proceso-compra", {
+      credentials: 'include'
+    });
     if (!resp.ok) throw new Error("Error al obtener productos del carrito");
 
     const carrito = await resp.json();
@@ -87,8 +89,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     try {
-      const response = await fetch("/api/finalizar-compra", {
+      const response = await fetch("http://localhost:3000/api/finalizar-compra", {
         method: "POST",
+        credentials: 'include',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datos)
       });

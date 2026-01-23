@@ -1,11 +1,12 @@
 // 📁 public/JS/perfil_usuario.js
+import { API_CONFIG, fetchAPI } from './api-config.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const nombreUsuario = document.getElementById('nombre-usuario');
   const fotoUsuario = document.getElementById('foto-usuario');
 
   try {
-    const response = await fetch('/api/usuario-actual');
+    const response = await fetchAPI(API_CONFIG.AUTH.USUARIO_ACTUAL);
     if (!response.ok) throw new Error("Error al obtener datos del usuario");
 
     const data = await response.json();

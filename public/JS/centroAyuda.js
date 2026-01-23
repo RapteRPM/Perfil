@@ -1,10 +1,12 @@
 // 🧭 Verificación de sesión y renderizado de perfil en el header
+import { API_CONFIG, fetchAPI } from './api-config.js';
+
 document.addEventListener("DOMContentLoaded", async () => {
   const contenedor = document.getElementById("perfilHeader");
 
   let usuario = null;
   try {
-    const res = await fetch("/api/usuario-actual");
+    const res = await fetchAPI(API_CONFIG.AUTH.USUARIO_ACTUAL);
     if (!res.ok) throw new Error("No hay sesión activa");
 
     const data = await res.json();

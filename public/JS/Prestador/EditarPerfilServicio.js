@@ -6,7 +6,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!usuarioId) return;
 
   try {
-    const res = await fetch(`/api/perfilPrestador/${usuarioId}`);
+    const res = await fetch(`http://localhost:3000/api/perfilPrestador/${usuarioId}`, {
+      credentials: 'include'
+    });
     const data = await res.json();
 
     document.getElementById("nombreCompleto").value = data.Nombre || "";
@@ -44,8 +46,9 @@ form.addEventListener("submit", async (e) => {
 
 
   try {
-    const res = await fetch(`/api/actualizarPerfilPrestador/${usuarioId}`, {
+    const res = await fetch(`http://localhost:3000/api/actualizarPerfilPrestador/${usuarioId}`, {
       method: "PUT",
+      credentials: 'include',
       body: formData,
     });
 

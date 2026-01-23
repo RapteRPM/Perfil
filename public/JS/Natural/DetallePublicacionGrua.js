@@ -7,7 +7,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // 🔹 Cargar detalle de la publicación    
   try {
-    const res = await fetch(`/api/publicaciones-grua/${idPublicacion}`);
+    const res = await fetch(`http://localhost:3000/api/publicaciones-grua/${idPublicacion}`, {
+      credentials: 'include'
+    });
     const data = await res.json();
 
     document.getElementById("tituloPublicacion").textContent = data.TituloPublicacion;
@@ -38,7 +40,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 🔹 Cargar opiniones
 async function cargarOpiniones() {
   try {
-    const res = await fetch(`/api/opiniones-grua/${idPublicacion}`);
+    const res = await fetch(`http://localhost:3000/api/opiniones-grua/${idPublicacion}`, {
+      credentials: 'include'
+    });
     const opiniones = await res.json();
 
     const contenedor = document.getElementById("opinionesContainer");
@@ -107,8 +111,9 @@ async function cargarOpiniones() {
     }
 
     try {
-      const res = await fetch("/api/opiniones-grua", {
+      const res = await fetch("http://localhost:3000/api/opiniones-grua", {
         method: "POST",
+        credentials: 'include',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           usuarioId: usuarioActivo.id,

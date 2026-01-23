@@ -5,7 +5,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!usuarioId) return;
 
   try {
-    const res = await fetch(`/api/historial-servicios/${usuarioId}`);
+    const res = await fetch(`http://localhost:3000/api/historial-servicios/${usuarioId}`, {
+      credentials: 'include'
+    });
     const data = await res.json();
 
     if (!Array.isArray(data)) return;

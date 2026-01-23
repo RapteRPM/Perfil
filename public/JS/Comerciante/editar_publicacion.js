@@ -22,7 +22,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // 🔹 Cargar la publicación existente
   try {
-    const response = await fetch(`/api/publicaciones/${idPublicacion}`);
+    const response = await fetch(`http://localhost:3000/api/publicaciones/${idPublicacion}`, {
+      credentials: 'include'
+    });
     const data = await response.json();
 
     if (data.error) throw new Error(data.error);
@@ -95,7 +97,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 🔹 Función para cargar categorías (ocultando “Servicio de grúa”)
   async function cargarCategorias(categoriaActualId) {
     try {
-      const res = await fetch("/api/categorias");
+      const res = await fetch("http://localhost:3000/api/categorias", {
+        credentials: 'include'
+      });
       const categorias = await res.json();
 
       categoriaSelect.innerHTML = '<option value="">Seleccione una categoría</option>';
@@ -136,8 +140,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     try {
-      const res = await fetch(`/api/publicaciones/${idPublicacion}`, {
+      const res = await fetch(`http://localhost:3000/api/publicaciones/${idPublicacion}`, {
         method: "PUT",
+        credentials: 'include',
         body: formData,
       });
 

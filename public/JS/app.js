@@ -1,4 +1,5 @@
 // 📂 public/JS/app.js
+// Nota: Asegúrate de cargar api-url-config.js ANTES de este archivo
 
 document.getElementById('loginForm').addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -7,11 +8,16 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
   const password = document.getElementById('input-pass').value.trim();
   const mensajeError = document.getElementById('mensaje-error');
 
+  const API_URL = window.API_URL || 'http://localhost:3000';
+  console.log('🔐 Intentando login en:', API_URL);
+
   try {
-    const response = await fetch('/api/login', {
+    // ✅ Petición directa con fetch
+    const response = await fetch(`${API_URL}/api/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      credentials: 'include',  // ⚠️ CRÍTICO para sesiones
+      body: JSON.stringify({ username, password })  // ⚠️ "username" no "usuario"
     });
 
     const data = await response.json();

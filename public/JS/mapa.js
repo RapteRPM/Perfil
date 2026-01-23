@@ -136,7 +136,9 @@ document.addEventListener("DOMContentLoaded", () => {
     inputBusqueda.addEventListener("input", buscarTaller);
   }
 
-  fetch('/api/talleres')
+import { API_CONFIG, fetchAPI } from './api-config.js';
+
+  fetchAPI(API_CONFIG.TALLERES.BASE)
     .then(res => res.json())
     .then(data => {
       talleres = data;

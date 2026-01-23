@@ -11,7 +11,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    const res = await fetch(`/api/factura/${facturaId}`);
+    const res = await fetch(`http://localhost:3000/api/factura/${facturaId}`, {
+      credentials: 'include'
+    });
     const data = await res.json();
 
     if (!res.ok) throw new Error(data.msg || 'Error al obtener factura');

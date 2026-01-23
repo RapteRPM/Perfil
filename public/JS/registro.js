@@ -1,4 +1,5 @@
 // registro.js — versión segura para los tres tipos de usuario(REGISTRAR NUEVOS USUARIOS)
+import { fetchAPI } from './api-config.js';
 
 document.addEventListener("DOMContentLoaded", () => {
   const tipoUsuarioSelect = document.getElementById("tipoUsuario");
@@ -144,7 +145,7 @@ if (tipoUsuario === "comerciante") {
 
     // --- 🔹 Enviar al servidor ---
     try {
-      const res = await fetch("/api/registro", {
+      const res = await fetchAPI("/api/registro", {
         method: "POST",
         body: formData
       });

@@ -18,7 +18,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ Cargar datos del perfil
   try {
-    const res = await fetch(`/api/perfilNatural/${usuarioId}`);
+    const res = await fetch(`http://localhost:3000/api/perfilNatural/${usuarioId}`, {
+      credentials: 'include'
+    });
     const data = await res.json();
 
     document.querySelector("input[type='text']").value = `${data.Nombre || ""} ${data.Apellido || ""}`;
@@ -54,8 +56,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (imagen) formData.append("FotoPerfil", imagen);
 
     try {
-      const res = await fetch(`/api/actualizarPerfilNatural/${usuarioId}`, {
+      const res = await fetch(`http://localhost:3000/api/actualizarPerfilNatural/${usuarioId}`, {
         method: "PUT",
+        credentials: 'include',
         body: formData,
       });
 

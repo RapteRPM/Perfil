@@ -1,7 +1,9 @@
 //REGISTRO DE LAS PUBLICACIONES COMERCIANTE 
   async function cargarPublicaciones() {
     try {
-      const res = await fetch('/api/publicaciones');
+      const res = await fetch('http://localhost:3000/api/publicaciones', {
+        credentials: 'include'
+      });
       const publicaciones = await res.json();
 
       const contenedor = document.querySelector('.grid');
@@ -37,7 +39,10 @@
     if (!confirm('¿Deseas eliminar esta publicación?')) return;
 
     try {
-      const res = await fetch(`/api/publicaciones/${id}`, { method: 'DELETE' });
+      const res = await fetch(`http://localhost:3000/api/publicaciones/${id}`, { 
+        method: 'DELETE',
+        credentials: 'include'
+      });
       const data = await res.json();
         if (res.ok) {
             alert(data.mensaje);
