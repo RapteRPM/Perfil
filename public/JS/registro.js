@@ -1,5 +1,22 @@
 // registro.js — versión segura para los tres tipos de usuario(REGISTRAR NUEVOS USUARIOS)
-import { fetchAPI } from './api-config.js';
+
+// Función para separar nombre completo en nombres y apellidos
+function separarNombreCompleto(nombreCompleto) {
+  const partes = nombreCompleto.trim().split(/\s+/); // Separar por espacios
+  
+  if (partes.length === 1) {
+    return { nombres: partes[0], apellidos: '' };
+  } else if (partes.length === 2) {
+    return { nombres: partes[0], apellidos: partes[1] };
+  } else if (partes.length === 3) {
+    return { nombres: partes[0], apellidos: `${partes[1]} ${partes[2]}` };
+  } else {
+    // 4 o más palabras: primeras 2 son nombres, resto apellidos
+    const nombres = `${partes[0]} ${partes[1]}`;
+    const apellidos = partes.slice(2).join(' ');
+    return { nombres, apellidos };
+  }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   const tipoUsuarioSelect = document.getElementById("tipoUsuario");
@@ -48,13 +65,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Campos comunes según tipo ---
     if (tipoUsuario === "natural") {
-      formData.append("TipoUsuario", "Natural"); // ✅ agregado
-      formData.append("Usuario", document.getElementById("Usuario").value);
-      formData.append("Nombre", document.getElementById("Nombre").value);
-      formData.append("Correo", document.getElementById("Correo").value);
-      formData.append("Direccion", document.getElementById("Direccion").value);
-      formData.append("Telefono", document.getElementById("Telefono").value);
-      formData.append("Barrio", document.getElementById("Barrio").value);
+      const getVal = (id) => document.getElementById(id)?.value?.trim() || "";
+      
+      const nombreCompleto = getVal("Nombre");
+      const { nombres, apellidos } = separarNombreCompleto(nombreCompleto);
+      
+      formData.append("TipoUsuario", "Natural");
+      formData.append("Usuario", getVal("Usuario"));
+      formData.append("Nombre", nombres);
+      formData.append("Apellido", apellidos);
+      formData.append("Correo", getVal("Correo"));
+      formData.append("Telefono", getVal("Telefono"));
+      formData.append("Barrio", getVal("Barrio"));
+
+      // --- Construir dirección completa para usuario natural ---
+      const tipoVia = getVal("TipoViaNatural");
+      const numPrincipal = getVal("NumPrincipalNatural");
+      const letra1 = getVal("Letra1Natural");
+      const orient1 = getVal("Orient1Natural");
+      const numSecundario = getVal("NumSecundarioNatural");
+      const letra2 = getVal("Letra2Natural");
+      const orient2 = getVal("Orient2Natural");
+      const numFinal = getVal("NumFinalNatural");
+      const letra3 = getVal("Letra3Natural");
+
+      let direccionCompleta = `${tipoVia} ${numPrincipal}`.trim();
+      if (letra1) direccionCompleta += ` ${letra1}`;
+      if (orient1) direccionCompleta += ` ${orient1}`;
+      if (numSecundario) direccionCompleta += ` #${numSecundario}`;
+      if (letra2) direccionCompleta += ` ${letra2}`;
+      if (orient2) direccionCompleta += ` ${orient2}`;
+      if (numFinal) direccionCompleta += ` - ${numFinal}`;
+      if (letra3) direccionCompleta += ` ${letra3}`;
+
+      if (!direccionCompleta || direccionCompleta.trim() === "" || direccionCompleta === "undefined") {
+        direccionCompleta = "Sin dirección especificada";
+      }
+
+      formData.append("Direccion", direccionCompleta);
 
       const fotoPerfil = document.getElementById("FotoPerfil")?.files?.[0];
       if (fotoPerfil) formData.append("FotoPerfil", fotoPerfil);
@@ -63,9 +111,13 @@ document.addEventListener("DOMContentLoaded", () => {
 if (tipoUsuario === "comerciante") {
   const getVal = (id) => document.getElementById(id)?.value?.trim() || "";
 
+  const nombreCompleto = getVal("NombreComerciante");
+  const { nombres, apellidos } = separarNombreCompleto(nombreCompleto);
+
   formData.append("TipoUsuario", "Comerciante");
   formData.append("Usuario", getVal("UsuarioComercio"));
-  formData.append("Nombre", getVal("NombreComerciante"));
+  formData.append("Nombre", nombres);
+  formData.append("Apellido", apellidos);
   formData.append("Correo", getVal("CorreoComercio"));
 
   // --- Construir dirección completa ---
@@ -124,9 +176,13 @@ if (tipoUsuario === "comerciante") {
     if (tipoUsuario === "servicio" || tipoUsuario === "prestadorservicios") {
       const getVal = (id) => document.getElementById(id)?.value || "";
 
-      formData.append("TipoUsuario", "PrestadorServicio"); // ✅ ya estaba correcto
+      const nombreCompleto = getVal("NombreServicio");
+      const { nombres, apellidos } = separarNombreCompleto(nombreCompleto);
+
+      formData.append("TipoUsuario", "PrestadorServicio");
       formData.append("Usuario", getVal("UsuarioServicio"));
-      formData.append("Nombre", getVal("NombreServicio"));
+      formData.append("Nombre", nombres);
+      formData.append("Apellido", apellidos);
       formData.append("Correo", getVal("CorreoServicio"));
       formData.append("Telefono", getVal("TelefonoServicio"));
       formData.append("Direccion", getVal("DireccionServicio"));
@@ -145,7 +201,7 @@ if (tipoUsuario === "comerciante") {
 
     // --- 🔹 Enviar al servidor ---
     try {
-      const res = await fetchAPI("/api/registro", {
+      const res = await fetch("/api/registro", {
         method: "POST",
         body: formData
       });
@@ -153,11 +209,22 @@ if (tipoUsuario === "comerciante") {
       const data = await res.json();
 
       if (res.ok) {
-        alert("✅ Registro exitoso");
-        console.log("Respuesta del servidor:", data);
-        window.location.href = "ingreso.html";
+        // Siempre redirigir a la página de crear contraseña con el token
+        if (data.token) {
+          console.log("✅ Registro exitoso, redirigiendo a crear contraseña...");
+          console.log("Respuesta del servidor:", data);
+          
+          // Redirigir directamente a la página de crear contraseña con el token
+          window.location.href = `crear-contrasena.html?token=${data.token}`;
+        } else {
+          // Fallback si no hay token (no debería pasar)
+          alert("✅ " + data.mensaje);
+          window.location.href = "Ingreso.html";
+        }
       } else {
-        alert("⚠️ Error: " + (data.error || "No se pudo registrar"));
+        // Manejar tanto 'error' como 'mensaje'
+        const mensajeError = data.error || data.mensaje || "No se pudo registrar";
+        alert("⚠️ " + mensajeError);
       }
     } catch (err) {
       console.error("Error en fetch:", err);

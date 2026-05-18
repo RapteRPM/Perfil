@@ -1,12 +1,10 @@
 // 🧭 Verificación de sesión y renderizado de perfil en el header
-import { API_CONFIG, fetchAPI } from './api-config.js';
-
 document.addEventListener("DOMContentLoaded", async () => {
   const contenedor = document.getElementById("perfilHeader");
 
   let usuario = null;
   try {
-    const res = await fetchAPI(API_CONFIG.AUTH.USUARIO_ACTUAL);
+    const res = await fetch("/api/usuario-actual");
     if (!res.ok) throw new Error("No hay sesión activa");
 
     const data = await res.json();
@@ -24,7 +22,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (contenedor) {
       contenedor.innerHTML = `
-        <a href="ingreso.html" class="btn btn-outline-light">Ingresar</a>
+        <a href="Ingreso.html" class="btn btn-outline-light">Ingresar</a>
       `;
     }
     return;
@@ -39,7 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <span class="font-semibold text-lg">${usuario.nombre || 'Usuario'}</span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="perfilDropdown">
-          <li><a class="dropdown-item" href="Editar_perfil.html">Configuración Perfil</a></li>
+          <li><a class="dropdown-item" href="../Natural/Editar_perfil.html">Configuración Perfil</a></li>
           <li><hr class="dropdown-divider"></li>
           <li><a class="dropdown-item text-danger" href="#" id="cerrarSesion">Cerrar sesión</a></li>
         </ul>
@@ -49,10 +47,40 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     document.getElementById("cerrarSesion").addEventListener("click", () => {
       localStorage.removeItem("usuarioActivo");
-      window.location.href = "ingreso.html";
+      window.location.href = "Ingreso.html";
     });
   }
+
+  // 🏠 Actualizar botón de Inicio según el tipo de usuario
+  actualizarBotonInicio(usuario);
 });
+
+// 🏠 Función para actualizar el botón de inicio según el tipo de usuario
+function actualizarBotonInicio(usuario) {
+  const botonInicio = document.querySelector('a[href="../General/index.html"]');
+  if (!botonInicio) return;
+
+  if (!usuario || !usuario.tipo) {
+    // Si no hay sesión, mantener el enlace a index.html
+    botonInicio.href = "../General/index.html";
+    return;
+  }
+
+  // Redirigir según el tipo de usuario
+  switch (usuario.tipo) {
+    case "Natural":
+      botonInicio.href = "../Natural/perfil_usuario.html";
+      break;
+    case "Comerciante":
+      botonInicio.href = "../Comerciante/perfil_comerciante.html";
+      break;
+    case "PrestadorServicio":
+      botonInicio.href = "../PrestadorServicios/perfil_servicios.html";
+      break;
+    default:
+      botonInicio.href = "../General/index.html";
+  }
+}
 
 // 📤 Envío del formulario de ayuda
 document.getElementById("formAyuda").addEventListener("submit", async function (e) {
@@ -84,7 +112,7 @@ document.getElementById("formAyuda").addEventListener("submit", async function (
   };
 
   try {
-    const res = await fetch("http://localhost:3000/api/centro-ayuda", {
+    const res = await fetch("/api/centro-ayuda", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(solicitud)

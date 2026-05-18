@@ -105,9 +105,8 @@ form.addEventListener('submit', async (e) => {
   }
 
   try {
-    const response = await fetch('http://localhost:3000/api/publicar', {
+    const response = await fetch('/api/publicar', {
       method: 'POST',
-      credentials: 'include',
       body: formData
     });
 

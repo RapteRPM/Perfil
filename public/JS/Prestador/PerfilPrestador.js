@@ -15,38 +15,43 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 🚫 Si no hay sesión o no es prestador, redirigir
   if (!usuario || !usuario.id || usuario.tipo !== "PrestadorServicio") {
     alert("⚠️ Debes iniciar sesión como prestador de servicios para ver este perfil.");
-    window.location.href = "../General/ingreso.html";
+    window.location.href = "../General/Ingreso.html";
     return;
   }
 
   try {
-    const res = await fetch("http://localhost:3000/api/perfil-prestador", {
-      credentials: 'include'
-    });
+    const res = await fetch("/api/perfil-prestador");
     if (!res.ok) throw new Error("No se pudo cargar el perfil");
 
     const data = await res.json();
 
+    // Mostrar nombre completo
+    const nombreCompleto = `${data.nombre || ''} ${data.apellido || ''}`.trim() || 'Prestador';
+
     // 👤 Perfil
     perfilEl.innerHTML = `
       <img src="${data.foto}" alt="Prestador" class="rounded-full border-4 border-white shadow-lg w-32 h-32 mx-auto mb-4">
-      <h2 class="text-3xl font-bold mb-1">Hola, ${data.nombre}</h2>
+      <h2 class="text-3xl font-bold mb-1">Hola, ${nombreCompleto}</h2>
       <p class="text-gray-300">${data.descripcion}</p>
     `;
 
     // 📊 Estadísticas
     estadisticasEl.innerHTML = `
       <div class="card text-center py-6">
-        <h5 class="text-lg font-semibold text-yellow-400"><i class="fas fa-exclamation-triangle"></i> Pendientes</h5>
-        <p class="text-4xl font-bold text-yellow-400 mt-2">${data.estadisticas.pendientes}</p>
+        <h5 class="text-lg font-semibold text-purple-400"><i class="fas fa-tasks"></i> Total Servicios</h5>
+        <p class="text-4xl font-bold text-purple-400 mt-2">${data.estadisticas.totalServicios || 0}</p>
+      </div>
+      <div class="card text-center py-6">
+        <h5 class="text-lg font-semibold text-yellow-400"><i class="fas fa-clock"></i> Pendientes</h5>
+        <p class="text-4xl font-bold text-yellow-400 mt-2">${data.estadisticas.pendientes || 0}</p>
       </div>
       <div class="card text-center py-6">
         <h5 class="text-lg font-semibold text-green-400"><i class="fas fa-check-circle"></i> Completados</h5>
-        <p class="text-4xl font-bold text-green-400 mt-2">${data.estadisticas.completados}</p>
+        <p class="text-4xl font-bold text-green-400 mt-2">${data.estadisticas.completados || 0}</p>
       </div>
       <div class="card text-center py-6">
         <h5 class="text-lg font-semibold text-blue-400"><i class="fas fa-star"></i> Valoración</h5>
-        <p class="text-4xl font-bold text-blue-400 mt-2">${data.estadisticas.valoracion}</p>
+        <p class="text-4xl font-bold text-blue-400 mt-2">${data.estadisticas.valoracion || 'N/A'}</p>
       </div>
     `;
 
@@ -75,8 +80,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 function estadoColor(estado) {
   switch (estado) {
     case "Pendiente": return "bg-warning text-dark";
-    case "Finalizado": return "bg-success";
-    case "Aceptado": return "bg-primary";
+    case "Terminado": 
+    case "Completado": return "bg-success";
+    case "Aceptado": return "bg-info text-dark";
+    case "Rechazado": return "bg-danger";
+    case "Cancelado": return "bg-secondary";
     default: return "bg-secondary";
   }
 }

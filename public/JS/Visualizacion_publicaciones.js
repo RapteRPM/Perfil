@@ -12,6 +12,7 @@ let categoriaSeleccionada = null;
  */
 async function cargarPublicaciones(categoria = null, limite = null) {
   try {
+    console.log("🔵 Visualizacion_publicaciones.js - cargarPublicaciones iniciando...", {categoria, limite});
     let url = '/api/publicaciones_publicas';
     const params = [];
     if (categoria && categoria.toLowerCase() !== 'todos') {
@@ -24,8 +25,11 @@ async function cargarPublicaciones(categoria = null, limite = null) {
       url += `?${params.join('&')}`;
     }
 
+    console.log("🔵 Fetching URL:", url);
     const res = await fetch(url);
+    console.log("🔵 Response status:", res.status);
     let productos = await res.json();
+    console.log("🔵 Productos recibidos:", productos.length);
 
     // 🔹 Normalizar rutas de imágenes
     productos = productos.map(p => {
@@ -34,7 +38,13 @@ async function cargarPublicaciones(categoria = null, limite = null) {
       if (Array.isArray(p.imagenes)) {
         imagenes = p.imagenes.map(img => img.replace(/\\/g, '/').trim());
       } else if (typeof p.imagenes === 'string' && p.imagenes.length > 0) {
-        imagenes = p.imagenes.split(',').map(img => img.replace(/\\/g, '/').trim());
+        try {
+          // Intentar parsear como JSON primero (formato Railway: ["imagen/..."])
+          imagenes = JSON.parse(p.imagenes);
+        } catch {
+          // Si falla, intentar como string separado por comas
+          imagenes = p.imagenes.split(',').map(img => img.replace(/\\/g, '/').trim());
+        }
       } else {
         imagenes = ['imagen/placeholder.png'];
       }
@@ -49,6 +59,7 @@ async function cargarPublicaciones(categoria = null, limite = null) {
     }
 
     publicacionesGlobal = productos;
+    console.log("🔵 Llamando renderizarProductos con", productos.slice(0, limite || productos.length).length, "productos");
     renderizarProductos(productos.slice(0, limite || productos.length));
 
   } catch (err) {
@@ -60,7 +71,9 @@ async function cargarPublicaciones(categoria = null, limite = null) {
  * Renderiza productos en el contenedor
  */
 function renderizarProductos(lista) {
+  console.log("🔵 renderizarProductos llamado con", lista.length, "productos");
   const contenedor = document.getElementById("contenedor-productos");
+  console.log("🔵 Contenedor encontrado:", !!contenedor);
   if (!contenedor) return;
 
   contenedor.innerHTML = "";
@@ -71,6 +84,7 @@ function renderizarProductos(lista) {
   }
 
   lista.forEach(p => {
+    console.log("🔵 Renderizando producto:", p.nombreProducto);
     const carouselId = `carousel-${p.idPublicacion}`;
 
     // 🖼️ Crear carrusel con imágenes
@@ -132,9 +146,7 @@ function filtrarCategoria(nombre) {
  */
 async function cargarCategorias() {
   try {
-    const res = await fetch('http://localhost:3000/api/categorias', {
-      credentials: 'include'
-    });
+    const res = await fetch('/api/categorias');
     const categorias = await res.json();
 
     const contenedor = document.getElementById("contenedor-categorias");
@@ -164,6 +176,7 @@ async function cargarCategorias() {
  * Inicialización al cargar la página
  */
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("🔵 Visualizacion_publicaciones.js - DOMContentLoaded iniciando...");
   cargarCategorias();
   cargarPublicaciones(null, 6);
 
@@ -181,48 +194,193 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /// INDEX.HTML VISUALIZACION DE PRODUCTOS
 
+// Variable global para almacenar todos los productos
+let todosLosProductos = [];
+
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log("🔵 Visualizacion_publicaciones.js - Segundo DOMContentLoaded (INDEX.HTML)");
+  
+  // Solo ejecutar si estamos en index.html (verificar si existe productos-grid)
+  const gridIndex = document.getElementById('productos-grid');
+  if (!gridIndex) {
+    console.log("🔵 No se encontró productos-grid, saltando inicialización de index.html");
+    return;
+  }
+  
+  console.log("🔵 Encontrado productos-grid, inicializando para index.html...");
+  
   // 🔹 Mostrar todos los productos públicos
   try {
-    const res = await fetch('http://localhost:3000/api/publicaciones_publicas?limite=12', {
-      credentials: 'include'
-    }); // Puedes ajustar el límite
+    const res = await fetch('/api/publicaciones_publicas?limite=50'); // Cargar más productos para filtrar
     const productos = await res.json();
+    todosLosProductos = productos; // Guardar en variable global
 
     if (Array.isArray(productos) && productos.length > 0) {
-      const grid = document.getElementById('productos-grid');
-      productos.forEach(p => {
-        const imagen = Array.isArray(p.imagenes) && p.imagenes.length > 0
-          ? p.imagenes[0]
-          : '/imagen/placeholder.png';
-
-        const tarjeta = document.createElement('div');
-        tarjeta.className = 'card card-bootstrap shadow-lg border-0';
-        tarjeta.innerHTML = `
-          <img src="${imagen}" class="d-block w-100 rounded-t-lg" alt="${p.nombreProducto}" onerror="this.src='/imagen/placeholder.png'">
-          <div class="card-body">
-            <h5 class="card-title font-bold">${p.nombreProducto}</h5>
-            <p class="text-gray-600">$${Number(p.precio).toLocaleString('es-CO')}</p>
-            <a href="Natural/Detalle_producto.html?id=${p.idPublicacion}" class="btn btn-danger">Ver Más</a>
-          </div>
-        `;
-        grid.appendChild(tarjeta);
-      });
+      mostrarProductos(productos.slice(0, 12)); // Mostrar primeros 12
     }
   } catch (err) {
     console.error('❌ Error cargando productos públicos:', err);
   }
 
+  // 🔹 Configurar botones de categorías
+  configurarBotonesCategorias();
+
+  // 🔹 Configurar búsqueda en tiempo real
+  configurarBusqueda();
+  
+  // 🔹 Continuar con visualizaciones recientes
+  cargarVisualizacionesRecientes();
+});
+
+/**
+ * Muestra los productos en el grid
+ */
+function mostrarProductos(productos) {
+  const grid = document.getElementById('productos-grid');
+  if (!grid) return;
+  
+  grid.innerHTML = ''; // Limpiar grid
+  
+  if (productos.length === 0) {
+    grid.innerHTML = '<p class="col-span-3 text-center text-gray-500">No se encontraron productos</p>';
+    return;
+  }
+  
+  productos.forEach(p => {
+    const imagen = Array.isArray(p.imagenes) && p.imagenes.length > 0
+      ? p.imagenes[0]
+      : '/imagen/placeholder.png';
+
+    const tarjeta = document.createElement('div');
+    tarjeta.className = 'card card-bootstrap shadow-lg border-0';
+    tarjeta.innerHTML = `
+      <img src="${imagen}" class="d-block w-100 rounded-t-lg" alt="${p.nombreProducto}" onerror="this.src='/imagen/placeholder.png'">
+      <div class="card-body">
+        <h5 class="card-title font-bold">${p.nombreProducto}</h5>
+        <p class="text-gray-600">$${Number(p.precio).toLocaleString('es-CO')}</p>
+        <a href="/Natural/Detalle_producto.html?id=${p.idPublicacion}" class="btn btn-danger">Ver Más</a>
+      </div>
+    `;
+    grid.appendChild(tarjeta);
+  });
+}
+
+/**
+ * Configura los botones de categorías
+ */
+function configurarBotonesCategorias() {
+  const btnTodos = document.getElementById('btn-todos');
+  const btnAccesorios = document.getElementById('btn-accesorios');
+  const btnServicios = document.getElementById('btn-servicios');
+  const btnRepuestos = document.getElementById('btn-repuestos');
+  
+  const botones = [btnTodos, btnAccesorios, btnServicios, btnRepuestos];
+  
+  // Función para resaltar botón activo
+  function activarBoton(botonActivo) {
+    botones.forEach(btn => {
+      if (btn) {
+        btn.classList.remove('bg-gray-700', 'bg-red-700');
+        btn.classList.add(btn === botonActivo ? 'bg-gray-700' : 'bg-red-600');
+      }
+    });
+  }
+  
+  if (btnTodos) {
+    btnTodos.addEventListener('click', () => {
+      activarBoton(btnTodos);
+      mostrarProductos(todosLosProductos.slice(0, 12));
+    });
+  }
+  
+  if (btnAccesorios) {
+    btnAccesorios.addEventListener('click', () => {
+      activarBoton(btnAccesorios);
+      const filtrados = todosLosProductos.filter(p => 
+        p.categoria && p.categoria.toLowerCase() === 'accesorios'
+      );
+      mostrarProductos(filtrados.slice(0, 12));
+    });
+  }
+  
+  if (btnServicios) {
+    btnServicios.addEventListener('click', () => {
+      activarBoton(btnServicios);
+      const filtrados = todosLosProductos.filter(p => 
+        p.categoria && p.categoria.toLowerCase() === 'servicio mecanico'
+      );
+      mostrarProductos(filtrados.slice(0, 12));
+    });
+  }
+  
+  if (btnRepuestos) {
+    btnRepuestos.addEventListener('click', () => {
+      activarBoton(btnRepuestos);
+      const filtrados = todosLosProductos.filter(p => 
+        p.categoria && p.categoria.toLowerCase() === 'repuestos'
+      );
+      mostrarProductos(filtrados.slice(0, 12));
+    });
+  }
+}
+
+/**
+ * Configura la búsqueda en tiempo real
+ */
+function configurarBusqueda() {
+  const inputBusqueda = document.getElementById('buscar-productos');
+  
+  if (inputBusqueda) {
+    inputBusqueda.addEventListener('input', (e) => {
+      const texto = e.target.value.toLowerCase().trim();
+      
+      if (texto === '') {
+        mostrarProductos(todosLosProductos.slice(0, 12));
+        return;
+      }
+      
+      const filtrados = todosLosProductos.filter(p => 
+        p.nombreProducto && p.nombreProducto.toLowerCase().includes(texto)
+      );
+      
+      mostrarProductos(filtrados.slice(0, 12));
+    });
+  }
+}
+
+/**
+ * Carga las visualizaciones recientes del usuario
+ */
+async function cargarVisualizacionesRecientes() {
+
   // 🔹 Mostrar visualizaciones recientes si el usuario está logueado
   const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo'));
-  if (!usuarioActivo || !usuarioActivo.id) return;
+  if (!usuarioActivo || !usuarioActivo.id) {
+    console.log("ℹ️ No hay usuario logueado, omitiendo visualizaciones");
+    return;
+  }
 
   try {
     const res = await fetch(`/api/visualizaciones/${usuarioActivo.id}`);
-    if (!res.ok) throw new Error("Respuesta no válida del servidor");
+    
+    // Si el endpoint no existe o falla, no hacer nada (sin error)
+    if (!res.ok) {
+      console.log("ℹ️ No hay visualizaciones disponibles o endpoint no configurado");
+      return;
+    }
 
     const publicaciones = await res.json();
-    if (!Array.isArray(publicaciones) || publicaciones.length === 0) return;
+    
+    // Validar que la respuesta sea un array
+    if (!Array.isArray(publicaciones)) {
+      console.log("ℹ️ Respuesta no es un array, omitiendo visualizaciones");
+      return;
+    }
+    
+    if (publicaciones.length === 0) {
+      console.log("ℹ️ No hay visualizaciones recientes");
+      return;
+    }
 
     const contenedor = document.createElement('section');
     contenedor.className = 'mb-12';
@@ -248,12 +406,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="card-body">
           <h5 class="card-title font-bold">${p.NombreProducto}</h5>
           <p class="text-gray-600">$${Number(p.Precio).toLocaleString('es-CO')}</p>
-          <a href="Natural/Detalle_producto.html?id=${p.IdPublicacion}" class="btn btn-danger">Ver Más</a>
+          <a href="/Natural/Detalle_producto.html?id=${p.IdPublicacion}" class="btn btn-danger">Ver Más</a>
         </div>
       `;
       grid.appendChild(tarjeta);
     });
+    
+    console.log(`✅ ${publicaciones.length} visualizaciones cargadas`);
   } catch (err) {
-    console.error('❌ Error cargando visualizaciones:', err);
+    console.log("ℹ️ No se pudieron cargar visualizaciones (esto es normal si no hay endpoint configurado):", err.message);
   }
-});
+}

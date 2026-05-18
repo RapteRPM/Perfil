@@ -1,8 +1,36 @@
 document.addEventListener('DOMContentLoaded', () => {
+  function resolverRutaApp(ruta) {
+    return window.RPM_PORTABLE_PATHS?.resolveAppUrl(ruta) || ruta;
+  }
+
   const params = new URLSearchParams(window.location.search);
   const idPublicacion = params.get('id');
 
   if (!idPublicacion) return console.error('No se proporcionó id de publicación');
+
+  // ===============================
+  // 🔄 Ajustar navegación según tipo de usuario
+  // ===============================
+  const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo'));
+  if (usuarioActivo && usuarioActivo.tipo === 'Comerciante') {
+    // Ocultar carrito
+    const linkCarrito = document.getElementById('link-carrito-detalle');
+    if (linkCarrito) linkCarrito.style.display = 'none';
+    
+    // Cambiar enlace de inicio a perfil comerciante
+    const linkInicio = document.getElementById('link-inicio-detalle');
+    if (linkInicio) linkInicio.href = '../Comerciante/perfil_comerciante.html';
+    
+    // Ocultar botones de compra (Añadir al carrito y Comprar ahora)
+    const btnCarrito = document.getElementById('btn-agregar-carrito');
+    const btnComprar = document.getElementById('btn-comprar-ahora');
+    if (btnCarrito) btnCarrito.style.display = 'none';
+    if (btnComprar) btnComprar.style.display = 'none';
+    
+    // Ocultar formulario de comentarios (solo visualización)
+    const formComentario = document.getElementById('form-comentario');
+    if (formComentario) formComentario.style.display = 'none';
+  }
 
   fetch(`/api/detallePublicacion/${idPublicacion}`)
     .then(res => res.json())
@@ -27,7 +55,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (Array.isArray(p.ImagenProducto)) {
         imagenes = p.ImagenProducto.map(img => img.replace(/\\/g, '/').trim());
       } else if (typeof p.ImagenProducto === 'string') {
-        imagenes = p.ImagenProducto.split(',').map(img => img.replace(/\\/g, '/').trim());
+        try {
+          // Intentar parsear como JSON primero (formato Railway: ["imagen/..."])
+          imagenes = JSON.parse(p.ImagenProducto);
+        } catch {
+          // Si falla, intentar como string separado por comas
+          imagenes = p.ImagenProducto.split(',').map(img => img.replace(/\\/g, '/').trim());
+        }
       }
 
       // Si no hay imágenes válidas, usar una por defecto
@@ -39,7 +73,12 @@ document.addEventListener('DOMContentLoaded', () => {
           imagenes = imagenes.map(img => {
             if (!img) return '/imagen/placeholder.png';
             let ruta = img.replace(/\\/g, '/').trim();
-            ruta = ruta.replace(/^\/?(Imagen|image|Natural)\//i, ''); // elimina prefijos incorrectos
+            
+            // Si ya tiene la ruta completa, retornarla
+            if (ruta.startsWith('/imagen/')) return ruta;
+            if (ruta.startsWith('imagen/')) return '/' + ruta;
+            
+            // Si no, construirla
             return '/imagen/' + ruta;
           });
 
@@ -84,20 +123,122 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // ===============================
-      // 💬 Opiniones existentes
+      // �️ Disparar evento para el mapa
+      // ===============================
+      window.publicacionDetalle = p;
+      const evento = new CustomEvent('publicacionCargada', { detail: p });
+      window.dispatchEvent(evento);
+
+      // ===============================
+      // �💬 Opiniones existentes
       // ===============================
       const opinionesContainer = document.getElementById('opiniones-container');
+
+      const esComerciante = usuarioActivo && usuarioActivo.tipo === 'Comerciante';
+      const esDuenoPublicacion = usuarioActivo && p.IdComerciante && usuarioActivo.id == p.IdComerciante;
+      
       const comentariosHTML = opiniones.map(op => `
-        <div class="comment-box border p-3 mb-3 rounded bg-light">
+        <div class="comment-box border p-3 mb-3 rounded bg-light" data-opinion-id="${op.IdOpinion}">
           <strong>${op.Nombre} ${op.Apellido}</strong>
           <div class="star-rating mb-1">
             ${[...Array(5)].map((_, i) => `<i class="bi bi-star${i < op.Calificacion ? '-fill' : ''} text-warning"></i>`).join('')}
           </div>
           <p>${op.Comentario}</p>
           <small class="text-muted">${new Date(op.FechaOpinion).toLocaleString()}</small>
+          
+          ${(esComerciante && esDuenoPublicacion) ? `
+            <div class="mt-2">
+              <button class="btn btn-sm btn-outline-primary btn-responder" data-opinion-id="${op.IdOpinion}">
+                <i class="fas fa-reply"></i> Responder
+              </button>
+              <div class="respuesta-form mt-2" id="respuesta-form-${op.IdOpinion}" style="display: none;">
+                <textarea class="form-control mb-2" placeholder="Escribe tu respuesta..." rows="2"></textarea>
+                <button class="btn btn-sm btn-success btn-enviar-respuesta" data-opinion-id="${op.IdOpinion}">Enviar</button>
+                <button class="btn btn-sm btn-secondary btn-cancelar-respuesta" data-opinion-id="${op.IdOpinion}">Cancelar</button>
+              </div>
+            </div>
+          ` : ''}
+          
+          ${op.Respuestas && op.Respuestas.length > 0 ? `
+            <div class="respuestas-container mt-3 ps-4 border-start border-primary">
+              ${op.Respuestas.map(resp => `
+                <div class="respuesta-item mb-2 p-2 bg-white rounded">
+                  <strong class="text-primary">${resp.NombreComercio || 'Comerciante'}</strong>
+                  <p class="mb-1">${resp.Respuesta}</p>
+                  <small class="text-muted">${new Date(resp.FechaRespuesta).toLocaleString()}</small>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
         </div>
       `).join('');
       opinionesContainer.innerHTML = comentariosHTML || '<p class="text-gray-500">No hay comentarios aún.</p>';
+
+      // ===============================
+      // 💬 Eventos para responder comentarios (solo comerciantes)
+      // ===============================
+      if (esComerciante) {
+        // Mostrar formulario de respuesta
+        document.querySelectorAll('.btn-responder').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const opinionId = e.target.closest('.btn-responder').dataset.opinionId;
+            const form = document.getElementById(`respuesta-form-${opinionId}`);
+            if (form) {
+              form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            }
+          });
+        });
+
+        // Cancelar respuesta
+        document.querySelectorAll('.btn-cancelar-respuesta').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const opinionId = e.target.dataset.opinionId;
+            const form = document.getElementById(`respuesta-form-${opinionId}`);
+            if (form) {
+              form.style.display = 'none';
+              form.querySelector('textarea').value = '';
+            }
+          });
+        });
+
+        // Enviar respuesta
+        document.querySelectorAll('.btn-enviar-respuesta').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const opinionId = e.target.dataset.opinionId;
+            const form = document.getElementById(`respuesta-form-${opinionId}`);
+            const textarea = form.querySelector('textarea');
+            const respuesta = textarea.value.trim();
+
+            if (!respuesta) {
+              alert('⚠️ Por favor escribe una respuesta.');
+              return;
+            }
+
+            try {
+              const res = await fetch('/api/opiniones/responder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  idOpinion: opinionId,
+                  idComerciante: usuarioActivo.id,
+                  respuesta: respuesta
+                })
+              });
+
+              const data = await res.json();
+              if (res.ok) {
+                alert('✅ Respuesta enviada correctamente.');
+                location.reload();
+              } else {
+                alert('❌ Error: ' + (data.error || 'No se pudo enviar la respuesta'));
+              }
+            } catch (err) {
+              console.error('Error al enviar respuesta:', err);
+              alert('❌ Error de conexión con el servidor.');
+            }
+          });
+        });
+      }
 
       // ===============================
       // 🛒 Botones de acción
@@ -106,15 +247,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (btnAgregar) {
         btnAgregar.addEventListener('click', async () => {
           try {
-            const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo'));
             if (!usuarioActivo) {
               alert('⚠️ Debes iniciar sesión para agregar productos al carrito.');
               return;
             }
 
-            const response = await fetch('http://localhost:3000/api/carrito', {
+            const response = await fetch('/api/carrito', {
               method: 'POST',
-              credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 idUsuario: usuarioActivo.id,
@@ -139,31 +278,57 @@ document.addEventListener('DOMContentLoaded', () => {
 const btnComprar = document.querySelector('#btn-comprar-ahora');
 if (btnComprar) {
   btnComprar.addEventListener('click', () => {
+    // Verificar si hay sesión activa
+    const usuarioActivoStr = localStorage.getItem('usuarioActivo');
+    
+    if (!usuarioActivoStr) {
+      alert('Necesita iniciar sesión para hacer esta transacción');
+      window.location.href = resolverRutaApp('/General/Ingreso.html');
+      return;
+    }
+
     const producto = {
       id: p.IdPublicacion,
       nombre: p.NombreProducto,
       precio: p.Precio,
-      imagen: imagenes[0] || '/imagen/placeholder.png'
+      imagen: imagenes[0] || '/imagen/placeholder.png',
+      nombreComercio: p.NombreComercio || 'No especificado',
+      direccionComercio: p.DireccionComercio || p.Direccion || 'No especificada'
     };
 
     localStorage.setItem('productoCompra', JSON.stringify(producto));
-    window.location.href = '/Natural/Proceso_compra.html';
+    window.location.href = resolverRutaApp('/Natural/Proceso_compra.html');
   });
 }
       // ===============================
       // ✍️ Enviar nueva opinión
       // ===============================
       const formComentario = document.getElementById('form-comentario');
+      
+      // Verificar tipo de usuario y ocultar formulario si es comerciante
+      if (usuarioActivo && usuarioActivo.tipo === 'Comerciante') {
+        // Ocultar el formulario de nuevos comentarios para comerciantes
+        const seccionNuevoComentario = formComentario?.parentElement;
+        if (seccionNuevoComentario) {
+          seccionNuevoComentario.style.display = 'none';
+        }
+      }
+      
       if (formComentario) {
         formComentario.addEventListener('submit', async (e) => {
           e.preventDefault();
 
           const comentario = document.getElementById('comentario').value.trim();
           const calificacion = document.getElementById('calificacion').value;
-          const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo'));
 
           if (!usuarioActivo) {
             alert('⚠️ Debes iniciar sesión para poder comentar.');
+            return;
+          }
+          
+          // Prevenir que comerciantes comenten (doble validación)
+          if (usuarioActivo.tipo === 'Comerciante') {
+            alert('⚠️ Los comerciantes no pueden dejar comentarios en productos.');
             return;
           }
 
@@ -173,9 +338,8 @@ if (btnComprar) {
           }
 
           try {
-            const res = await fetch('http://localhost:3000/api/opiniones', {
+            const res = await fetch('/api/opiniones', {
               method: 'POST',
-              credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 usuarioId: usuarioActivo.id,

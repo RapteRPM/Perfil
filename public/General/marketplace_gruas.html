@@ -30,19 +30,22 @@
       </div>
     </div>
 
-  <!-- PERFIL EN HEADER -->
+  <!-- PERFIL EN HEADER (solo si hay sesión) -->
     <div class="flex items-center space-x-4">
-      <div class="dropdown">
+      <div class="dropdown" id="perfil-container-gruas" style="display: none;">
         <button class="flex items-center bg-transparent border-0 text-white" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-          <img id="foto-usuario" src="../image/imagen_perfil.png" alt="Usuario" class="w-20 h-20 object-cover rounded-full border-2 border-white mr-2"/>
+          <img id="foto-usuario" src="IMAGENINGRESO/imagen_perfil.png" alt="Usuario" class="w-20 h-20 object-cover rounded-full border-2 border-white mr-2"/>
           <span class="font-semibold text-lg" id="nombre-usuario">Cargando...</span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="perfilDropdown">
-          <li><a class="dropdown-item" href="Editar_perfil.html">Configuración Perfil</a></li>
+          <li><a class="dropdown-item" href="#" id="link-editar-perfil-gruas">Configuración Perfil</a></li>
           <li><hr class="dropdown-divider"></li>
           <li><a class="dropdown-item text-danger" href="/logout">Cerrar sesión</a></li>
         </ul>
       </div>
+      
+      <!-- Botón Ingresar (solo sin sesión) -->
+      <a href="/General/Ingreso.html" id="link-ingresar-gruas" class="btn btn-outline-light">Ingresar</a>
     </div>
   </div>
 
@@ -52,14 +55,15 @@
 
     <!-- Sección izquierda: Icono + título -->
     <div class="flex items-center space-x-3">
-      <h1 class="text-2xl font-bold tracking-wide">Centro de ayuda</h1>
+      <i class="fas fa-truck-monster text-2xl"></i>
+      <h1 class="text-2xl font-bold tracking-wide">Marketplace de Grúas</h1>
     </div>
 
     <!-- Sección derecha: enlaces -->
     <div class="flex items-center space-x-8 mt-3 md:mt-0">
-      <a href="../Natural/perfil_usuario.html" class="hover:text-gray-200 transition">Inicio</a>
+      <a href="index.html" class="hover:text-gray-200 transition">RPM MARKET</a>
+      <a href="../Natural/perfil_usuario.html" id="link-perfil-nav-gruas" class="hover:text-gray-200 transition" style="display: none;">Perfil</a>
       <a href="CentroAyuda.html" class="hover:text-gray-200 transition">Centro de ayuda</a>
-
     </div>
 
   </div>
@@ -89,7 +93,7 @@
     </div>
     <div>
       <h4 class="text-lg font-bold mb-2">Atención al cliente</h4>
-      <p>Email: asistencia@rpm.com</p>
+      <p>Email: rpmservice2026@gmail.com</p>
       <p>Teléfono: 301 403 8181</p>
     </div>
     <div>
@@ -110,8 +114,55 @@
 </footer>
 
 
+<script src="../JS/portablePaths.js"></script>
 <script src="../JS/market_gruas.js"></script>
 <script src="../JS/perfil_usuario.js"></script>
 <script src="../JS/UsuarioSesion.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🔄 Verificando sesión en marketplace_gruas...');
+    
+    // Verificar sesión y mostrar/ocultar elementos según corresponda
+    const usuario = await verificarSesion();
+    console.log('👤 Usuario obtenido:', usuario);
+    
+    const perfilContainer = document.getElementById('perfil-container-gruas');
+    const linkIngresar = document.getElementById('link-ingresar-gruas');
+    const linkPerfilNav = document.getElementById('link-perfil-nav-gruas');
+    const linkEditarPerfil = document.getElementById('link-editar-perfil-gruas');
+    
+    if (usuario && usuario.id) {
+      console.log('✅ Usuario con sesión activa, mostrando perfil');
+      // Hay sesión: mostrar perfil y ocultar botón ingresar
+      if (perfilContainer) {
+        perfilContainer.style.display = 'block';
+        console.log('✅ Perfil container mostrado');
+      }
+      if (linkIngresar) linkIngresar.style.display = 'none';
+      if (linkPerfilNav) linkPerfilNav.style.display = 'inline-block';
+      
+      // Cargar información del usuario
+      await cargarUsuarioHeader();
+      
+      // Configurar link de editar perfil según tipo de usuario
+      if (linkEditarPerfil) {
+        if (usuario.tipo === 'Natural') {
+          linkEditarPerfil.href = '../Natural/Editar_perfil.html';
+        } else if (usuario.tipo === 'Comerciante') {
+          linkEditarPerfil.href = '../Comerciante/EditarPerfil_comerciante.html';
+        } else if (usuario.tipo === 'PrestadorServicio') {
+          linkEditarPerfil.href = '../PrestadorServicios/configuracion_prestador.html';
+        }
+      }
+    } else {
+      console.log('⚠️ No hay sesión activa, mostrando botón ingresar');
+      // No hay sesión: ocultar perfil y mostrar botón ingresar
+      if (perfilContainer) perfilContainer.style.display = 'none';
+      if (linkIngresar) linkIngresar.style.display = 'inline-block';
+      if (linkPerfilNav) linkPerfilNav.style.display = 'none';
+    }
+  });
+</script>
 </body>
 </html>

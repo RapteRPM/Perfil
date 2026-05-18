@@ -14,9 +14,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ Cargar datos del perfil
   try {
-    const res = await fetch(`http://localhost:3000/api/perfilComerciante/${usuarioId}`, {
-      credentials: 'include'
-    });
+    const res = await fetch(`/api/perfilComerciante/${usuarioId}`);
     if (!res.ok) {
       console.error("Fetch perfil falló:", res.status, res.statusText);
       return;
@@ -30,6 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     console.log("✅ Perfil del comerciante:", data);
 
+    // Actualizar formulario
     document.getElementById("Nombre").value = data.Nombre || "";
     document.getElementById("Apellido").value = data.Apellido || "";
     document.getElementById("NombreComercio").value = data.NombreComercio || "";
@@ -43,6 +42,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("HoraFin").value = data.HoraFin || "";
     document.getElementById("RedesSociales").value = data.RedesSociales || "";
 
+    // Actualizar sidebar (foto y nombre)
+    const fotoUsuario = document.getElementById("foto-usuario");
+    const nombreUsuario = document.getElementById("nombre-usuario");
+    
+    if (fotoUsuario && data.FotoPerfil) {
+      fotoUsuario.src = `/${data.FotoPerfil}`;
+    }
+    
+    if (nombreUsuario) {
+      const nombreCompleto = `${data.Nombre || ""} ${data.Apellido || ""}`.trim();
+      // Mostrar solo el primer nombre
+      const primerNombre = nombreCompleto.split(' ')[0] || data.NombreComercio || "Usuario";
+      nombreUsuario.textContent = primerNombre;
+    }
+
+    // Preview de imagen
     if (data.FotoPerfil && previewImg) {
       previewImg.src = `/${data.FotoPerfil}`;
       previewContainer.classList.remove("hidden");
@@ -58,9 +73,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const formData = new FormData(form); // ✅ incluye automáticamente FotoPerfil si el input tiene name="FotoPerfil"
 
     try {
-      const res = await fetch(`http://localhost:3000/api/actualizarPerfilComerciante/${usuarioId}`, {
+      const res = await fetch(`/api/actualizarPerfilComerciante/${usuarioId}`, {
         method: "PUT",
-        credentials: 'include',
         body: formData,
       });
 
@@ -73,9 +87,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       alert(data.mensaje || "Perfil actualizado correctamente ✅");
 
       if (data.fotoPerfil) {
+        // Actualizar preview
         previewImg.src = `/${data.fotoPerfil}`;
         imagenPerfil.value = "";
         previewContainer.classList.add("hidden");
+        
+        // Actualizar foto del sidebar
+        const fotoUsuario = document.getElementById("foto-usuario");
+        if (fotoUsuario) {
+          fotoUsuario.src = `/${data.fotoPerfil}`;
+        }
       }
     } catch (err) {
       console.error("❌ Error al enviar formulario:", err);

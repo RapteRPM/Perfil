@@ -16,16 +16,18 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <style>
-      .map-container {
-    border-radius: 15px;
-    overflow: hidden;
-    height: 400px;
-  }
+    .map-container {
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      margin-top: 20px;
+    }
 
-  .map-container iframe {
-    width: 100%;
-    height: 100%;
-  }
+    #map {
+      width: 100%;
+      height: 350px;
+      border-radius: 15px;
+    }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -39,7 +41,13 @@
       </div>
     </div>
     <div class="flex items-center space-x-4">
-      <div class="dropdown">
+      <!-- Botón Ingresar (solo visible sin sesión) -->
+      <a id="link-ingresar-detalle" href="../General/Ingreso.html" class="btn btn-light px-4 py-2" style="display: none;">
+        <i class="fas fa-sign-in-alt me-2"></i>Ingresar
+      </a>
+      
+      <!-- Perfil (solo visible con sesión) -->
+      <div id="perfil-container-detalle" class="dropdown" style="display: none;">
         <button class="flex items-center bg-transparent border-0 text-white" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
           <img id="foto-usuario" src="../image/imagen_perfil.png" alt="Usuario" class="w-16 h-16 object-cover rounded-full border-2 border-white mr-2"/>
           <span id="nombre-usuario" class="font-semibold text-lg">Cargando...</span>
@@ -62,10 +70,10 @@
       </div>
       <!-- Links -->
       <div class="hidden md:flex items-center space-x-6">
-        <a href="../index.html" class="hover:text-gray-200 transition">RPM market</a>
-        <a href="perfil_usuario.html" class="hover:text-gray-200 transition"> Inicio</a>
-        <a href="carrito_compras.html" class="hover:text-gray-200 transition"> Carrito</a>
-        <a href="../CentroAyuda.html" class="hover:text-gray-200 transition"> Centro deyuda</a>
+        <a id="link-rpm-market" href="../General/index.html" class="hover:text-gray-200 transition">RPM market</a>
+        <a id="link-inicio-detalle" href="perfil_usuario.html" class="hover:text-gray-200 transition">Inicio</a>
+        <a id="link-carrito-detalle" href="carrito_compras.html" class="hover:text-gray-200 transition">Carrito</a>
+        <a id="link-centro-ayuda" href="../General/CentroAyuda.html" class="hover:text-gray-200 transition">Centro de ayuda</a>
       </div>
       <!-- Mobile -->
       <button class="md:hidden text-white"><i class="fas fa-bars text-xl"></i></button>
@@ -93,18 +101,13 @@
 
       <!-- Botones -->
       <div class="botones-accion mb-4">
-        <button class="btn btn-primary btn-lg px-4 me-2">Añadir al carrito</button>
+        <button id="btn-agregar-carrito" class="btn btn-primary btn-lg px-4 me-2">Añadir al carrito</button>
         <button id="btn-comprar-ahora" class="btn btn-outline-success btn-lg px-4">Comprar ahora</button>
       </div>
 
       <!-- 📍 Mapa dentro del detalle -->
-      <div class="map-container shadow">
-        <div class="row">
-          <div class="col-md-8 mb-4">
-            <div id="map" style="height:300px;"></div>
-            <button class="btn btn-success mt-3" onclick="localizarUsuario()">📍 Mi ubicación</button>
-          </div>  
-        </div>
+      <div class="map-container">
+        <div id="map"></div>
       </div>
     </div>
   </div>
@@ -150,7 +153,7 @@
     </div>
     <div>
       <h4 class="text-lg font-bold mb-2">Atención al Cliente</h4>
-      <p>Email: infoRPM@gmail.com</p>
+      <p>Email: rpmservice2026@gmail.com</p>
       <p>Teléfono: 301 403 8181</p>
     </div>
     <div>
@@ -169,10 +172,60 @@
     </div>
   </div>
 </footer>
-  <script></script>
+  <script>
+    // Verificar sesión y mostrar/ocultar perfil
+    document.addEventListener('DOMContentLoaded', () => {
+      const usuarioActivo = localStorage.getItem('usuarioActivo');
+      const perfilContainer = document.getElementById('perfil-container-detalle');
+      const linkIngresar = document.getElementById('link-ingresar-detalle');
+      
+      if (usuarioActivo) {
+        // Hay sesión: mostrar perfil, ocultar botón ingresar
+        perfilContainer.style.display = 'block';
+        linkIngresar.style.display = 'none';
+        
+        // Verificar si es administrador
+        try {
+          const usuario = JSON.parse(usuarioActivo);
+          if (usuario.tipo === 'Administrador') {
+            // Ocultar opciones que no aplican al admin
+            const linkRPMMarket = document.getElementById('link-rpm-market');
+            const linkCarrito = document.getElementById('link-carrito-detalle');
+            const linkCentroAyuda = document.getElementById('link-centro-ayuda');
+            const linkInicio = document.getElementById('link-inicio-detalle');
+            const botonesCompra = document.querySelector('.botones-accion');
+            const formComentario = document.getElementById('form-comentario');
+            
+            if (linkRPMMarket) linkRPMMarket.style.display = 'none';
+            if (linkCarrito) linkCarrito.style.display = 'none';
+            if (linkCentroAyuda) linkCentroAyuda.style.display = 'none';
+            
+            // Cambiar el link de inicio al panel admin
+            if (linkInicio) {
+              linkInicio.href = '../Administrador/panel_admin.html';
+              linkInicio.textContent = 'Panel Admin';
+            }
+            
+            // Ocultar botones de compra para admin
+            if (botonesCompra) botonesCompra.style.display = 'none';
+            
+            // Ocultar formulario de comentarios para admin
+            if (formComentario) formComentario.parentElement.style.display = 'none';
+          }
+        } catch (e) {
+          console.log('Error al parsear usuario:', e);
+        }
+      } else {
+        // No hay sesión: ocultar perfil, mostrar botón ingresar
+        perfilContainer.style.display = 'none';
+        linkIngresar.style.display = 'block';
+      }
+    });
+  </script>
+  <script src="../JS/portablePaths.js"></script>
   <script src="../JS/perfil_usuario.js"></script>
   <script src="../JS/UsuarioSesion.js"></script>
   <script src="../JS/Natural/detallePublicacion.js"></script>
-  <script src="../JS/mapa.js"></script>
+  <script src="../JS/Natural/mapaDetalleProducto.js"></script>
 </body>
 </html>

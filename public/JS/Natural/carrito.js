@@ -3,9 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const totalGeneral = document.getElementById('total-general');
 
   try {
-    const response = await fetch('http://localhost:3000/api/carrito', {
-      credentials: 'include'
-    });
+    const response = await fetch('/api/carrito');
     if (!response.ok) throw new Error('Error al obtener el carrito');
 
     const carrito = await response.json();
@@ -70,9 +68,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 🔄 Cambiar cantidad de un producto
 async function cambiarCantidad(idCarrito, nuevaCantidad) {
   try {
-    await fetch(`http://localhost:3000/api/carrito/${idCarrito}`, {
+    await fetch(`/api/carrito/${idCarrito}`, {
       method: 'PUT',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cantidad: nuevaCantidad }),
     });
@@ -87,10 +84,7 @@ async function eliminarProducto(idCarrito) {
   if (!confirm('¿Eliminar este producto del carrito?')) return;
 
   try {
-    await fetch(`http://localhost:3000/api/carrito/${idCarrito}`, { 
-      method: 'DELETE',
-      credentials: 'include'
-    });
+    await fetch(`/api/carrito/${idCarrito}`, { method: 'DELETE' });
     location.reload();
   } catch (err) {
     console.error('❌ Error al eliminar producto:', err);

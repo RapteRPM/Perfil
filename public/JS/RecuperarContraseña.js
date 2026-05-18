@@ -10,9 +10,7 @@
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/usuarios/cedula/${cedula}`, {
-        credentials: 'include'
-      });
+      const response = await fetch(`/api/usuarios/cedula/${cedula}`);
       const result = await response.json();
 
       if (response.ok) {

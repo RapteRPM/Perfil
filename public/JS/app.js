@@ -1,5 +1,8 @@
 // 📂 public/JS/app.js
-// Nota: Asegúrate de cargar api-url-config.js ANTES de este archivo
+
+function resolverRutaApp(ruta) {
+  return window.RPM_PORTABLE_PATHS?.resolveAppUrl(ruta) || ruta;
+}
 
 document.getElementById('loginForm').addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -8,17 +11,19 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
   const password = document.getElementById('input-pass').value.trim();
   const mensajeError = document.getElementById('mensaje-error');
 
-  const API_URL = window.API_URL || 'http://localhost:3000';
-  console.log('🔐 Intentando login en:', API_URL);
-
   try {
-    // ✅ Petición directa con fetch
-    const response = await fetch(`${API_URL}/api/login`, {
+    // 🔄 Crear timeout de 5 segundos
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',  // ⚠️ CRÍTICO para sesiones
-      body: JSON.stringify({ username, password })  // ⚠️ "username" no "usuario"
+      body: JSON.stringify({ username, password }),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     const data = await response.json();
 
@@ -32,21 +37,34 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
 
 
       // ✅ Redirigir según tipo de usuario
-      if (data.tipo === 'Natural') {
-        window.location.href = '/Natural/perfil_usuario.html';
+      if (data.redirect) {
+        // Redirección personalizada desde el backend (para Administrador)
+        window.location.href = resolverRutaApp(data.redirect);
+      } else if (data.tipo === 'Natural') {
+        window.location.href = resolverRutaApp('/Natural/perfil_usuario.html');
       } else if (data.tipo === 'Comerciante') {
-        window.location.href = '/Comerciante/perfil_comerciante.html';
+        window.location.href = resolverRutaApp('/Comerciante/perfil_comerciante.html');
       } else if (data.tipo === 'PrestadorServicio') {
-        window.location.href = '/PrestadorServicios/perfil_servicios.html';
+        window.location.href = resolverRutaApp('/PrestadorServicios/perfil_servicios.html');
       } else {
-        window.location.href = '/General/index.html';
+        window.location.href = resolverRutaApp('/General/index.html');
       }
 
     } else {
-      mensajeError.textContent = data.error || 'Usuario y/o contraseña errada.';
+      // Verificar si es un error por usuario inactivo
+      if (data.requiereAprobacion && data.estado === 'Inactivo') {
+        mensajeError.textContent = '⏳ ' + data.error;
+        mensajeError.style.color = '#ff9800'; // Color naranja para indicar pendiente
+      } else {
+        mensajeError.textContent = data.error || 'Usuario y/o contraseña errada.';
+      }
     }
   } catch (error) {
     console.error('❌ Error al conectar con el servidor:', error);
-    mensajeError.textContent = 'Error en el servidor. Intenta más tarde.';
+    if (error.name === 'AbortError') {
+      mensajeError.textContent = '⚠️ El servidor no responde. Intenta más tarde.';
+    } else {
+      mensajeError.textContent = 'Error en el servidor. Intenta más tarde.';
+    }
   }
 });
