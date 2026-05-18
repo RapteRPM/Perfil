@@ -1,0 +1,12 @@
+pages:
+  stage: deploy
+
+  script:
+    - echo "Deploying frontend"
+
+  artifacts:
+    paths:
+      - public
+
+  only:
+    - main
