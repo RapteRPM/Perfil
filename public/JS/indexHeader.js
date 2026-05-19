@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function resolverRutaApp(ruta) {
     return window.RPM_PORTABLE_PATHS?.resolveAppUrl(ruta) || ruta;
   }
-  
+
   // Verificar sesión en el servidor
   let usuario = null;
   try {
@@ -76,6 +76,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       rutaPerfil = '/Comerciante/perfil_comerciante.html';
     } else if (usuario.tipo === 'PrestadorServicios') {
       rutaPerfil = '/PrestadorServicios/perfil_servicios.html';
+    } else if (usuario.tipo === 'Administrador') {
+      rutaPerfil = '/Administrador/panel_admin.html';
     }
     
     navPerfilButton.innerHTML = `<a href="${rutaPerfil}" class="hover:text-gray-200 transition"><i class="fas fa-user-circle mr-1"></i>Perfil</a>`;

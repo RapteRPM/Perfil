@@ -45,8 +45,10 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
         window.location.href = resolverRutaApp('/Natural/perfil_usuario.html');
       } else if (data.tipo === 'Comerciante') {
         window.location.href = resolverRutaApp('/Comerciante/perfil_comerciante.html');
-      } else if (data.tipo === 'PrestadorServicio') {
+      } else if (data.tipo === 'PrestadorServicio' || data.tipo === 'PrestadorServicios') {
         window.location.href = resolverRutaApp('/PrestadorServicios/perfil_servicios.html');
+      } else if (data.tipo === 'Administrador') {
+        window.location.href = resolverRutaApp('/Administrador/panel_admin.html');
       } else {
         window.location.href = resolverRutaApp('/General/index.html');
       }
