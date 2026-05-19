@@ -28,7 +28,7 @@
   // Verificar sesión al cargar la página
   async function verificarSesionActiva() {
     try {
-      const response = await fetch('/api/verificar-sesion');
+      const response = await fetch('/api/verificar-sesion', { credentials: 'include' });
       const data = await response.json();
       
       if (!data.activa) {

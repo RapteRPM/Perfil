@@ -86,17 +86,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       imagenes.forEach((imagen, index) => {
         // Limpiar la ruta
-        let rutaImagen = '';
-        if (typeof imagen === 'string') {
-          rutaImagen = imagen.replace(/\\/g, '/').trim();
-          
-          // Si la ruta empieza con "imagen/", agregar barra al inicio
-          if (rutaImagen.toLowerCase().startsWith('imagen/')) {
-            rutaImagen = '/' + rutaImagen;
-          } else {
-            rutaImagen = rutaImagen.startsWith('/') ? rutaImagen : '/' + rutaImagen;
-          }
-        }
+        const rutaImagen = window.RPM_PORTABLE_PATHS?.normalizeImageUrl(imagen) || '../General/IMAGENINGRESO/Grua.png';
         
         // Crear item del carrusel
         const carouselItem = document.createElement('div');

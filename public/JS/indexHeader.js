@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let usuario = null;
   try {
     console.log("🔵 Verificando sesión en el servidor...");
-    const res = await fetch("/api/verificar-sesion");
+    const res = await fetch("/api/verificar-sesion", { credentials: "include" });
     console.log("🔵 Response status:", res.status);
     console.log("🔵 Response headers:", [...res.headers.entries()]);
     if (res.ok) {
@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               id="perfilDropdown"
               style="cursor: pointer;">
         <img id="foto-usuario" 
-             src="${usuario.foto && usuario.foto.startsWith('/') ? usuario.foto : '/' + (usuario.foto || 'imagen/imagen_perfil.png')}" 
+             src="${window.RPM_PORTABLE_PATHS?.normalizeImageUrl(usuario.foto) || '/image/imagen_perfil.png'}" 
              alt="Usuario" 
              class="rounded-circle border border-white border-2"
              style="width: 50px; height: 50px; object-fit: cover;"/>
@@ -171,7 +171,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           
           try {
             // Llamar al endpoint de logout en el servidor
-            await fetch("/logout", { method: "GET" });
+            await fetch("/logout", { method: "GET", credentials: "include" });
             console.log("✅ Logout en servidor completado");
           } catch (error) {
             console.error("⚠️ Error al cerrar sesión en servidor:", error);

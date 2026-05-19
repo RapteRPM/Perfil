@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     console.log("🔵 Solicitando /api/usuario-actual...");
-    const response = await fetch('/api/usuario-actual');
+    const response = await fetch('/api/usuario-actual', { credentials: 'include' });
     console.log("🔵 Response status:", response.status);
     
     if (!response.ok) {
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Mostrar datos en el header
     nombreUsuario.textContent = nombreMostrar;
-    fotoUsuario.src = data.foto || '/imagen/imagen_perfil.png';
+    fotoUsuario.src = window.RPM_PORTABLE_PATHS?.normalizeImageUrl(data.foto) || '/image/imagen_perfil.png';
 
     // 🧩 Guardar usuario en localStorage para usarlo en otras páginas
     localStorage.setItem('usuarioActivo', JSON.stringify({

@@ -66,20 +66,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Si no hay imágenes válidas, usar una por defecto
       if (!imagenes || imagenes.length === 0) {
-        imagenes = ['imagen/placeholder.png'];
+        imagenes = ['/image/placeholder.svg'];
       }
 
           // Normalizar rutas y asegurar que sean absolutas
           imagenes = imagenes.map(img => {
-            if (!img) return '/imagen/placeholder.png';
-            let ruta = img.replace(/\\/g, '/').trim();
-            
-            // Si ya tiene la ruta completa, retornarla
-            if (ruta.startsWith('/imagen/')) return ruta;
-            if (ruta.startsWith('imagen/')) return '/' + ruta;
-            
-            // Si no, construirla
-            return '/imagen/' + ruta;
+            return window.RPM_PORTABLE_PATHS?.normalizeImageUrl(img) || '/image/placeholder.svg';
           });
 
           // Verificar si hay contenedor de imagen
@@ -90,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   <div class="carousel-inner">
                     ${imagenes.map((src, i) => `
                       <div class="carousel-item ${i === 0 ? 'active' : ''}">
-                        <img src="${src}" class="d-block w-100 producto-imagen" alt="Imagen ${i + 1}" onerror="this.src='/imagen/placeholder.png'">
+                        <img src="${src}" class="d-block w-100 producto-imagen" alt="Imagen ${i + 1}" onerror="this.src='/image/placeholder.svg'">
                       </div>
                     `).join('')}
                   </div>
@@ -107,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
               imgContainer.src = imagenes[0];
               imgContainer.classList.add('producto-imagen');
               imgContainer.onerror = () => {
-                imgContainer.src = '/imagen/placeholder.png';
+                imgContainer.src = '/image/placeholder.svg';
               };
             }
           }
@@ -291,7 +283,7 @@ if (btnComprar) {
       id: p.IdPublicacion,
       nombre: p.NombreProducto,
       precio: p.Precio,
-      imagen: imagenes[0] || '/imagen/placeholder.png',
+      imagen: imagenes[0] || '/image/placeholder.svg',
       nombreComercio: p.NombreComercio || 'No especificado',
       direccionComercio: p.DireccionComercio || p.Direccion || 'No especificada'
     };

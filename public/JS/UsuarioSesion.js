@@ -5,7 +5,7 @@ async function cargarUsuarioHeader() {
   console.log("🔵 UsuarioSesion.js - cargarUsuarioHeader iniciando...");
   
   try {
-    const res = await fetch("/api/usuario-actual");
+    const res = await fetch("/api/usuario-actual", { credentials: "include" });
     console.log("🔵 /api/usuario-actual response status:", res.status);
     
     if (!res.ok) {
@@ -30,12 +30,11 @@ async function cargarUsuarioHeader() {
     // Usar ruta absoluta para la foto
     if (fotoEl) {
       // Si data.foto viene con ruta, usar tal cual, sino usar imagen por defecto
-      if (data.foto && data.foto.startsWith('/')) {
-        fotoEl.src = data.foto;
-      } else if (data.foto) {
-        fotoEl.src = '/' + data.foto;
+      const rutaFoto = window.RPM_PORTABLE_PATHS?.normalizeImageUrl(data.foto);
+      if (rutaFoto) {
+        fotoEl.src = rutaFoto;
       } else {
-        fotoEl.src = "/imagen/imagen_perfil.png";
+        fotoEl.src = "/image/imagen_perfil.png";
       }
       console.log("✅ Foto asignada:", fotoEl.src);
     }
@@ -47,7 +46,7 @@ async function cargarUsuarioHeader() {
 // ⚙️ Función general para verificar sesión y tipo de usuario (sin redirigir)
 async function verificarSesion(usuarioEsperadoTipo = null) {
   try {
-    const res = await fetch("/api/verificar-sesion");
+    const res = await fetch("/api/verificar-sesion", { credentials: "include" });
     if (!res.ok) return null;
 
     const usuario = await res.json();
@@ -71,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   console.log("🔵 UsuarioSesion.js - DOMContentLoaded ejecutándose");
   
   try {
-    const res = await fetch("/api/usuario-actual");
+    const res = await fetch("/api/usuario-actual", { credentials: "include" });
     
     if (res.ok) {
       // Hay sesión activa - cargar datos del usuario

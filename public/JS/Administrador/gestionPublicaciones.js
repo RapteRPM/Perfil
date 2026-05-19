@@ -173,11 +173,11 @@ function actualizarGrid() {
       try {
         const imagenes = JSON.parse(pub.ImagenPrincipal);
         if (Array.isArray(imagenes) && imagenes.length > 0) {
-          imagen = '/' + imagenes[0];
+          imagen = window.RPM_PORTABLE_PATHS?.normalizeImageUrl(imagenes[0]) || '/image/imagen_perfil.png';
         }
       } catch (e) {
         // Si no es JSON, usar como está
-        imagen = pub.ImagenPrincipal ? '/' + pub.ImagenPrincipal : '/image/imagen_perfil.png';
+        imagen = pub.ImagenPrincipal ? (window.RPM_PORTABLE_PATHS?.normalizeImageUrl(pub.ImagenPrincipal) || '/image/imagen_perfil.png') : '/image/imagen_perfil.png';
       }
     }
     
@@ -246,10 +246,10 @@ function abrirModalEliminar(idPublicacion, esGrua) {
     try {
       const imagenes = JSON.parse(publicacion.ImagenPrincipal);
       if (Array.isArray(imagenes) && imagenes.length > 0) {
-        imagen = '/' + imagenes[0];
+        imagen = window.RPM_PORTABLE_PATHS?.normalizeImageUrl(imagenes[0]) || '/image/imagen_perfil.png';
       }
     } catch (e) {
-      imagen = publicacion.ImagenPrincipal ? '/' + publicacion.ImagenPrincipal : '/image/imagen_perfil.png';
+      imagen = publicacion.ImagenPrincipal ? (window.RPM_PORTABLE_PATHS?.normalizeImageUrl(publicacion.ImagenPrincipal) || '/image/imagen_perfil.png') : '/image/imagen_perfil.png';
     }
   }
   

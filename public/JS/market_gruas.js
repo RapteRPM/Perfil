@@ -32,22 +32,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Normalizar rutas de imágenes - usar misma lógica que detalle
       let imagenSrc = "../General/IMAGENINGRESO/Grua.png";
       if (imagenes.length > 0) {
-        let primeraImagen = imagenes[0];
-        
-        if (typeof primeraImagen === 'string') {
-          primeraImagen = primeraImagen.replace(/\\/g, '/').trim();
-          
-          // Si la ruta empieza con "imagen/", usar tal cual con barra al inicio
-          if (primeraImagen.toLowerCase().startsWith('imagen/')) {
-            imagenSrc = '/' + primeraImagen;
-          } 
-          // Si no tiene prefijo, asumimos que es la ruta completa
-          else {
-            imagenSrc = primeraImagen.startsWith('/') ? primeraImagen : '/' + primeraImagen;
-          }
-          
-          console.log("🖼️ Ruta de imagen para publicación", idPublicacion, ":", imagenSrc);
-        }
+        imagenSrc = window.RPM_PORTABLE_PATHS?.normalizeImageUrl(imagenes[0]) || "../General/IMAGENINGRESO/Grua.png";
+        console.log("🖼️ Ruta de imagen para publicación", idPublicacion, ":", imagenSrc);
       }
 
       card.innerHTML = `

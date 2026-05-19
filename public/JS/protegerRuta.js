@@ -22,7 +22,7 @@ function resolverRutaApp(ruta) {
 
   // Segunda verificación: verificar con el servidor
   try {
-    const response = await fetch("/api/verificar-sesion");
+    const response = await fetch("/api/verificar-sesion", { credentials: "include" });
     const data = await response.json();
     
     if (!data.activa) {

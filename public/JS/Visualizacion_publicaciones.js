@@ -46,10 +46,10 @@ async function cargarPublicaciones(categoria = null, limite = null) {
           imagenes = p.imagenes.split(',').map(img => img.replace(/\\/g, '/').trim());
         }
       } else {
-        imagenes = ['imagen/placeholder.png'];
+        imagenes = ['/image/placeholder.svg'];
       }
 
-      imagenes = imagenes.map(img => img.startsWith('/') ? img.slice(1) : img);
+      imagenes = imagenes.map(img => window.RPM_PORTABLE_PATHS?.normalizeImageUrl(img) || '/image/placeholder.svg');
 
       return { ...p, imagenes };
     });
@@ -91,7 +91,7 @@ function renderizarProductos(lista) {
     const imagenesHTML = p.imagenes
       .map((img, index) => `
         <div class="carousel-item ${index === 0 ? "active" : ""}">
-          <img src="/${img}" class="d-block w-100 producto-imagen rounded" alt="Imagen ${index + 1}">
+          <img src="${img}" class="d-block w-100 producto-imagen rounded" alt="Imagen ${index + 1}">
         </div>
       `).join("");
 
@@ -248,13 +248,13 @@ function mostrarProductos(productos) {
   
   productos.forEach(p => {
     const imagen = Array.isArray(p.imagenes) && p.imagenes.length > 0
-      ? p.imagenes[0]
-      : '/imagen/placeholder.png';
+      ? window.RPM_PORTABLE_PATHS?.normalizeImageUrl(p.imagenes[0]) || '/image/placeholder.svg'
+      : '/image/placeholder.svg';
 
     const tarjeta = document.createElement('div');
     tarjeta.className = 'card card-bootstrap shadow-lg border-0';
     tarjeta.innerHTML = `
-      <img src="${imagen}" class="d-block w-100 rounded-t-lg" alt="${p.nombreProducto}" onerror="this.src='/imagen/placeholder.png'">
+      <img src="${imagen}" class="d-block w-100 rounded-t-lg" alt="${p.nombreProducto}" onerror="this.src='/image/placeholder.svg'">
       <div class="card-body">
         <h5 class="card-title font-bold">${p.nombreProducto}</h5>
         <p class="text-gray-600">$${Number(p.precio).toLocaleString('es-CO')}</p>
@@ -395,14 +395,14 @@ async function cargarVisualizacionesRecientes() {
     publicaciones.forEach(p => {
       const imagen = Array.isArray(p.ImagenProducto)
         ? p.ImagenProducto[0]
-        : (typeof p.ImagenProducto === 'string' ? p.ImagenProducto.split(',')[0] : '/imagen/placeholder.png');
+        : (typeof p.ImagenProducto === 'string' ? p.ImagenProducto.split(',')[0] : '/image/placeholder.svg');
 
-      const rutaImagen = imagen.startsWith('/') ? imagen : `/imagen/${imagen.trim().replace(/\\/g, '/')}`;
+      const rutaImagen = window.RPM_PORTABLE_PATHS?.normalizeImageUrl(imagen) || '/image/placeholder.svg';
 
       const tarjeta = document.createElement('div');
       tarjeta.className = 'card card-bootstrap shadow-lg border-0';
       tarjeta.innerHTML = `
-        <img src="${rutaImagen}" class="d-block w-100 rounded-t-lg" alt="${p.NombreProducto}" onerror="this.src='/imagen/placeholder.png'">
+        <img src="${rutaImagen}" class="d-block w-100 rounded-t-lg" alt="${p.NombreProducto}" onerror="this.src='/image/placeholder.svg'">
         <div class="card-body">
           <h5 class="card-title font-bold">${p.NombreProducto}</h5>
           <p class="text-gray-600">$${Number(p.Precio).toLocaleString('es-CO')}</p>

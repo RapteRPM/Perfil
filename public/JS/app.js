@@ -20,6 +20,7 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
+      credentials: 'include',
       signal: controller.signal
     });
 

@@ -205,6 +205,46 @@
       color: #333;
     }
 
+    .codigo-visible-box {
+      display: none;
+      background: linear-gradient(135deg, #fff7f7 0%, #ffffff 100%);
+      border: 1px solid #f0c7c7;
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin: 15px 0;
+      text-align: center;
+      box-shadow: 0 6px 18px rgba(209, 0, 0, 0.08);
+    }
+
+    .codigo-visible-box h4 {
+      margin: 0 0 8px;
+      color: #7a0000;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .codigo-visible-box .codigo-valor {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 120px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      background: #fff;
+      border: 2px dashed #d10000;
+      color: #b30000;
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      margin-bottom: 8px;
+    }
+
+    .codigo-visible-box p {
+      margin: 0;
+      color: #666;
+      font-size: 0.85rem;
+    }
+
     .code-inputs {
       display: flex;
       justify-content: center;
@@ -502,8 +542,14 @@
             </div>
 
             <p class="correo-info">
-              Enviamos un código a: <strong id="correo-oculto"></strong>
+              Código generado para: <strong id="correo-oculto"></strong>
             </p>
+
+            <div id="codigo-visible-box" class="codigo-visible-box" aria-live="polite">
+              <h4>Tu código de verificación es</h4>
+              <div id="codigo-visible" class="codigo-valor">----</div>
+              <p>Usa este valor para completar la verificación y continuar.</p>
+            </div>
 
             <div class="code-inputs">
               <input type="text" class="code-input" maxlength="1" id="code1" inputmode="numeric">
@@ -605,10 +651,10 @@
             document.getElementById('infoAprobacion').style.display = 'block';
           }
           
-          await enviarCodigoVerificacion();
-          
           document.getElementById('loading-inicial').style.display = 'none';
           document.getElementById('formulario-principal').style.display = 'block';
+
+          await enviarCodigoVerificacion();
         } else {
           mostrarError(data.error || 'El enlace es inválido o ha expirado.');
         }
@@ -629,14 +675,27 @@
         const data = await response.json();
 
         if (data.success) {
-          document.getElementById('correo-oculto').textContent = data.correo;
+          tokenActual = data.token || tokenActual;
+          const codigoVisible = data.codigo || '';
+          document.getElementById('correo-oculto').textContent = data.correo || usuarioData.correo || 'tu correo';
+          document.getElementById('codigo-visible').textContent = codigoVisible;
+          document.getElementById('codigo-visible-box').style.display = 'block';
+          document.getElementById('error-codigo').style.display = 'none';
+          codeInputs.forEach(input => {
+            input.value = '';
+            input.classList.remove('invalid', 'valid');
+            input.disabled = false;
+          });
           document.getElementById('code1').focus();
+          return true;
         } else {
-          console.warn('Error al enviar código:', data.error);
-          document.getElementById('correo-oculto').textContent = usuarioData.correo || 'tu correo';
+          mostrarErrorCodigo(data.error || 'No fue posible generar el código.');
+          return false;
         }
       } catch (error) {
         console.error('Error al enviar código:', error);
+        mostrarErrorCodigo('Error al generar el código.');
+        return false;
       }
     }
 
@@ -743,27 +802,14 @@
       }, 1000);
 
       try {
-        const response = await fetch('/api/reenviar-codigo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: tokenActual })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          codeInputs.forEach(input => {
-            input.value = '';
-            input.classList.remove('invalid');
-          });
+        const enviado = await enviarCodigoVerificacion();
+        if (enviado) {
           codeInputs[0].focus();
           document.getElementById('error-codigo').style.display = 'none';
-        } else {
-          mostrarErrorCodigo(data.error || 'Error al reenviar el código.');
         }
       } catch (error) {
         console.error('Error:', error);
-        mostrarErrorCodigo('Error al reenviar el código.');
+        mostrarErrorCodigo('Error al generar el código.');
       }
     });
 

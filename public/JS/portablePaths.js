@@ -57,6 +57,28 @@
     return `${apiBase.replace(/\/$/, '')}${path}`;
   }
 
+  function normalizeImageUrl(path, folderName = 'Imagen') {
+    if (!path || typeof path !== 'string' || isExternalUrl(path)) {
+      return path;
+    }
+
+    const normalizedFolder = folderName.replace(/^\/+|\/+$/g, '');
+    const cleanedPath = path.replace(/\\/g, '/').trim().replace(/^\/+/, '');
+    const lowerPath = cleanedPath.toLowerCase();
+    const lowerFolder = normalizedFolder.toLowerCase();
+
+    if (lowerPath.startsWith(`${lowerFolder}/`)) {
+      return `/${cleanedPath}`;
+    }
+
+    if (lowerPath.startsWith('imagen/') || lowerPath.startsWith('image/')) {
+      const relative = cleanedPath.split('/').slice(1).join('/');
+      return `/${normalizedFolder}/${relative}`;
+    }
+
+    return `/${normalizedFolder}/${cleanedPath}`;
+  }
+
   function rewriteAttributeValue(element, attributeName, resolver) {
     const currentValue = element.getAttribute(attributeName);
     if (!currentValue || isExternalUrl(currentValue)) {
@@ -94,7 +116,7 @@
 
     event.preventDefault();
 
-    Promise.resolve(fetch(resolveApiUrl('/logout'), { method: 'GET' }))
+    Promise.resolve(fetch(resolveApiUrl('/logout'), { method: 'GET', credentials: 'include' }))
       .catch(() => null)
       .finally(() => {
         localStorage.clear();
@@ -106,15 +128,20 @@
   if (typeof window.fetch === 'function') {
     const originalFetch = window.fetch.bind(window);
 
+    const withCredentials = (init) => ({
+      ...(init || {}),
+      credentials: (init && init.credentials) || 'include'
+    });
+
     window.fetch = (input, init) => {
       if (typeof input === 'string' && (input.startsWith('/api/') || input === '/logout' || input === '/health')) {
-        return originalFetch(resolveApiUrl(input), init);
+        return originalFetch(resolveApiUrl(input), withCredentials(init));
       }
 
       if (input instanceof Request) {
         const requestUrl = input.url;
         if (requestUrl.startsWith(window.location.origin) && (requestUrl.includes('/api/') || requestUrl.endsWith('/logout') || requestUrl.endsWith('/health'))) {
-          return originalFetch(resolveApiUrl(new URL(requestUrl).pathname), init || input);
+          return originalFetch(resolveApiUrl(new URL(requestUrl).pathname), init ? withCredentials(init) : input);
         }
       }
 
@@ -127,6 +154,7 @@
     appBase,
     resolveAppUrl,
     resolveApiUrl,
+    normalizeImageUrl,
     rewriteDocumentPaths
   };
 

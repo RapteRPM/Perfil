@@ -41,18 +41,7 @@ async function cargarPublicacionesGrua() {
       // Normalizar rutas de imágenes siguiendo la estructura real:
       // /imagen/PrestadorServicios/idUsuario/publicaciones/idPublicacion/nombreArchivo.ext
       const imagenesNormalizadas = imagenes.map(img => {
-        let ruta = img.replace(/\\/g, '/').trim();
-        
-        // Si la imagen ya tiene la ruta completa con "imagen/PrestadorServicios", usarla directamente
-        if (ruta.includes('imagen/PrestadorServicios') || ruta.includes('Imagen/PrestadorServicios')) {
-          return ruta.startsWith('public/')
-            ? '/' + ruta.substring(7)
-            : (ruta.startsWith('/') ? ruta : '/' + ruta);
-        }
-        
-        // Extraer nombre de archivo y construir ruta correcta
-        const nombreArchivo = ruta.split('/').pop();
-        return `/imagen/PrestadorServicios/${idUsuario}/publicaciones/${id}/${nombreArchivo}`;
+        return window.RPM_PORTABLE_PATHS?.normalizeImageUrl(img) || '../General/IMAGENINGRESO/Grua.png';
       });
       
       console.log('🖼️ Imágenes normalizadas para publicación', id, ':', imagenesNormalizadas);

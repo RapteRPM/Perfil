@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let usuario = null;
   try {
-    const res = await fetch("/api/usuario-actual");
+    const res = await fetch("/api/usuario-actual", { credentials: "include" });
     if (!res.ok) throw new Error("No hay sesión activa");
 
     const data = await res.json();
@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const perfilHTML = `
       <div class="dropdown">
         <button class="flex items-center bg-transparent border-0 text-white" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-          <img src="${usuario.foto || 'image/imagen_perfil.png'}" alt="Usuario" class="w-16 h-16 object-cover rounded-full border-2 border-white mr-2"/>
+          <img src="${window.RPM_PORTABLE_PATHS?.normalizeImageUrl(usuario.foto) || '/image/imagen_perfil.png'}" alt="Usuario" class="w-16 h-16 object-cover rounded-full border-2 border-white mr-2"/>
           <span class="font-semibold text-lg">${usuario.nombre || 'Usuario'}</span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="perfilDropdown">
